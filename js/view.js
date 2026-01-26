@@ -1,4 +1,4 @@
-// Pomocnicza funkcja (Security & Helpers)
+// Pomocnicza funkcja
 function createElement(tag, className, text = '') {
     const el = document.createElement(tag);
     if (className) el.className = className;
@@ -13,33 +13,21 @@ function createTodoItem(task) {
     const content = createElement('div', 'todo-content');
     const checkbox = createElement('div', 'custom-checkbox');
 
-    // --- NOWOŚĆ: Kontener na tekst i datę ---
-    // Dzięki temu data jest ładnie pod tekstem
     const textContainer = createElement('div', 'text-container');
-    
-    // Treść zadania
     const span = createElement('span', 'text', task.text);
     
-    // Data dodania (formatujemy timestamp z ID)
+    // Data
     const dateObj = new Date(task.id); 
     const dateString = dateObj.toLocaleDateString('pl-PL', {
         day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'
     });
     
+    // ZMIANA: Zamiast style.fontSize... używamy klasy CSS
     const dateSpan = createElement('span', 'date-info', dateString);
-    // Style dla daty (można przenieść do CSS, ale tu działają od ręki)
-    dateSpan.style.fontSize = '0.75rem';
-    dateSpan.style.color = '#888';
-    dateSpan.style.marginTop = '2px';
-    dateSpan.style.display = 'block';
 
-    // Składamy tekst i datę w jeden klocek
     textContainer.append(span, dateSpan);
-    
-    // Składamy lewą stronę (checkbox + teksty)
     content.append(checkbox, textContainer);
 
-    // Przycisk usuwania
     const btn = createElement('button', 'delete-btn', '🗑');
     btn.ariaLabel = "Usuń";
 
@@ -52,44 +40,33 @@ export const elements = {
     input: document.getElementById('todo-input'),
     form: document.getElementById('todo-form'),
     stats: document.getElementById('stats-counter'),
-    // --- NOWOŚĆ: Uchwyt do przycisku czyszczenia ---
-    // Upewnij się, że dodałeś ten przycisk w HTML z id="clear-completed"
     clearBtn: document.getElementById('clear-completed') 
 };
 
 export function renderList(tasks) {
-    // 1. Wyczyść listę
     while (elements.list.firstChild) {
         elements.list.removeChild(elements.list.firstChild);
     }
 
-    // --- NOWOŚĆ: Empty State (Gdy lista pusta) ---
     if (tasks.length === 0) {
+        // ZMIANA: Używamy klasy .empty-state z CSS zamiast stylów inline
         const emptyMsg = createElement('div', 'empty-state', '🎉 Brak zadań! Odpocznij.');
-        // Style dla komunikatu
-        emptyMsg.style.textAlign = 'center';
-        emptyMsg.style.padding = '40px 0';
-        emptyMsg.style.color = '#aaa';
-        emptyMsg.style.fontStyle = 'italic';
-        
         elements.list.appendChild(emptyMsg);
-        return; // Kończymy funkcję, nie rysujemy pętli
+        return;
     }
 
-    // 2. Rysuj zadania jeśli są
     tasks.forEach(task => elements.list.appendChild(createTodoItem(task)));
 }
 
 export function renderStats({ total, completed }) {
     elements.stats.textContent = `${total} zadania • ${completed} ukończone`;
 
-    // --- NOWOŚĆ: Pokazywanie/Ukrywanie przycisku "Usuń ukończone" ---
-    // Jeśli element istnieje w HTML (bo mogłeś go jeszcze nie dodać), obsłuż go:
     if (elements.clearBtn) {
+        // ZMIANA: Zamiast style.display, przełączamy klasę 'hidden'
         if (completed > 0) {
-            elements.clearBtn.style.display = 'block';
+            elements.clearBtn.classList.remove('hidden'); // Pokaż
         } else {
-            elements.clearBtn.style.display = 'none';
+            elements.clearBtn.classList.add('hidden');    // Ukryj
         }
     }
 }

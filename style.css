@@ -100,6 +100,48 @@ ul { list-style: none; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+/* --- NOWE STYLE (CSP & Features) --- */
+
+/* 1. Klasa narzędziowa do ukrywania (zamiast inline style) */
+.hidden {
+    display: none !important;
+}
+
+/* 2. Przycisk usuwania ukończonych */
+#clear-completed {
+    width: 100%;
+    margin-top: 20px;
+    background-color: #f1f3f5;
+    color: #495057;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#clear-completed:hover {
+    background-color: #e9ecef;
+}
+
+/* 3. Empty State (Pusta lista) */
+.empty-state {
+    text-align: center;
+    padding: 40px 0;
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 1rem;
+}
+
+/* 4. Data pod zadaniem */
+.date-info {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 4px;
+    display: block;
+}
+
 /* --- DESKTOP (Ekrany > 600px) --- */
 @media (min-width: 600px) {
     body { background-color: var(--bg); padding-top: 50px; align-items: flex-start; }

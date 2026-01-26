@@ -11,6 +11,8 @@
     <meta name="description" content="Szybka i bezpieczna lista zadań offline.">
     <meta name="theme-color" content="#007bff">
 
+    <link rel="icon" href="data:,">
+
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -29,12 +31,14 @@
 
         <ul id="todo-list" class="todo-list"></ul>
 
-<button id="clear-completed" style="display:none; width:100%; margin-top:15px; background:#eee; color:#555; border:none; padding:10px; border-radius:8px;">
-    Wyczyść ukończone zadania
-</button>
+        <button id="clear-completed" class="hidden">
+            Wyczyść ukończone zadania
+        </button>
 
         <footer>
-            <p>© 2026 Bezpieczne ToDo PWA</p>
+            <p style="text-align: center; color: #ccc; font-size: 0.8rem; margin-top: 20px;">
+                © 2026 Bezpieczne ToDo PWA
+            </p>
         </footer>
     </div>
 
