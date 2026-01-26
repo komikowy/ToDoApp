@@ -152,3 +152,11 @@ ul { list-style: none; }
         padding: 40px;
     }
 }
+
+/* Styl stopki */
+.footer-text {
+    text-align: center;
+    color: #ccc;
+    font-size: 0.8rem;
+    margin-top: 20px;
+}
