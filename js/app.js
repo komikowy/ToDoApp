@@ -1,3 +1,6 @@
+console.log("APP STARTUJE!");
+alert("APP STARTUJE!");
+
 import * as Store from './store.js';
 import * as View from './view.js';
 
