@@ -45,3 +45,11 @@ export function calculateStats(tasks) {
         completed: tasks.filter(t => t.done).length
     };
 }
+
+export function removeCompleted(tasks) {
+    const updated = tasks.filter(task => !task.done);
+    // Używamy wewnętrznej funkcji zapisu (jeśli jej nie eksportowałeś, 
+    // to musisz użyć localStorage bezpośrednio jak poniżej)
+    localStorage.setItem('secure_tasks_v1', JSON.stringify(updated)); 
+    return updated;
+}

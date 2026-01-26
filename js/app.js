@@ -1,6 +1,3 @@
-console.log("APP STARTUJE!");
-alert("APP STARTUJE!");
-
 import * as Store from './store.js';
 import * as View from './view.js';
 
@@ -32,20 +29,38 @@ function handleListClick(e) {
     if (!item) return;
     const id = Number(item.dataset.id);
 
+    // Obsługa przycisku kosza (pojedyncze usuwanie)
     if (e.target.closest('.delete-btn')) {
         currentTasks = Store.removeTask(currentTasks, id);
-    } else if (e.target.closest('.todo-content')) {
+    } 
+    // Obsługa kliknięcia w treść (oznaczanie jako wykonane)
+    else if (e.target.closest('.todo-content')) {
         currentTasks = Store.toggleTask(currentTasks, id);
     }
     updateView();
 }
 
 function init() {
+    // Podpięcie podstawowych zdarzeń
     View.elements.form.addEventListener('submit', handleAdd);
     View.elements.list.addEventListener('click', handleListClick);
+
+    // --- NOWOŚĆ: Obsługa przycisku "Usuń ukończone" ---
+    // Sprawdzamy czy przycisk istnieje (na wypadek gdybyś zapomniał dodać go w HTML)
+    if (View.elements.clearBtn) {
+        View.elements.clearBtn.addEventListener('click', () => {
+            if (confirm("Czy na pewno usunąć wszystkie ukończone zadania?")) {
+                // Wywołujemy funkcję z Store.js
+                currentTasks = Store.removeCompleted(currentTasks);
+                updateView();
+            }
+        });
+    }
+
+    // Pierwsze renderowanie widoku
     updateView();
 
-    // Rejestracja PWA
+    // Rejestracja PWA (Service Worker)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
