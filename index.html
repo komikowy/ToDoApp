@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bezpieczne ToDo PWA</title>
+    
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; style-src 'self'; img-src 'self' data: https:; script-src 'self'; object-src 'none';">
+
+    <meta name="description" content="Szybka i bezpieczna lista zadań offline.">
+    <meta name="theme-color" content="#007bff">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>Moje Zadania</h1>
+            <div class="stats" id="stats-counter">Ładowanie...</div>
+        </header>
+
+        <form id="todo-form">
+            <input type="text" id="todo-input" placeholder="Co masz do zrobienia?" autocomplete="off">
+            <button type="submit" id="add-btn">Dodaj</button>
+        </form>
+
+        <ul id="todo-list" class="todo-list"></ul>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>

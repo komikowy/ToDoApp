@@ -1,0 +1,112 @@
+:root {
+    --primary: #007bff;
+    --bg: #f4f4f9;
+    --card-bg: #ffffff;
+    --text: #333;
+    --danger: #ff4d4d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+body {
+    background-color: var(--card-bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* --- MOBILE FIRST (Domyślny widok) --- */
+.app-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    background: var(--card-bg);
+}
+
+header { text-align: center; margin: 10px 0 25px; }
+h1 { font-size: 1.8rem; margin-bottom: 5px; }
+.stats { font-size: 0.9rem; color: #888; }
+
+#todo-form { display: flex; gap: 10px; margin-bottom: 25px; height: 50px; }
+
+input[type="text"] {
+    flex-grow: 1;
+    padding: 0 15px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-size: 16px; /* Zapobiega zoom na iOS */
+    outline: none;
+}
+input[type="text"]:focus { border-color: var(--primary); }
+
+button#add-btn {
+    padding: 0 20px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+ul { list-style: none; }
+
+.todo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 0;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.todo-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.text { font-size: 1.1rem; word-break: break-word; line-height: 1.4; }
+
+/* Stan ukończony */
+.todo-item.completed .text { text-decoration: line-through; color: #bbb; }
+.todo-item.completed .custom-checkbox { background: var(--primary); border-color: var(--primary); }
+.todo-item.completed .custom-checkbox::after { content: '✔'; color: white; font-size: 14px; }
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 1.4rem;
+    padding: 10px;
+    cursor: pointer;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- DESKTOP (Ekrany > 600px) --- */
+@media (min-width: 600px) {
+    body { background-color: var(--bg); padding-top: 50px; align-items: flex-start; }
+    .app-container {
+        max-width: 500px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        padding: 40px;
+    }
+}
