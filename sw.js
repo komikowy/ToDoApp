@@ -6,11 +6,14 @@ const ASSETS_TO_CACHE = [
     './style.css',
     './manifest.json',
     './js/app.js',
-    './js/store.js',
-    './js/view.js',
-    './js/helpers.js',       // <--- WAŻNE: Nowy plik logiczny
-    './icons/icon-192.png',  // <--- WAŻNE: Lokalne ikony
-    './icons/icon-512.png'   // <--- WAŻNE: Lokalne ikony
+    './js/helpers.js',
+    './js/bootstrap/initApp.js',
+    './js/controllers/todoController.js',
+    './js/domain/todoRules.js',
+    './js/store/todoStore.js',
+    './js/view/todoView.js',
+    './icons/icon-192.png',
+    './icons/icon-512.png'
 ];
 
 // 1. Instalacja (Pobieranie plików do pamięci urządzenia)
