@@ -7,7 +7,6 @@ let currentTasks = Store.getTasks();
 const MAX_LENGTH = 200;
 
 // Zmienna przechowująca ID zadania do usunięcia (dla Modala)
-// Rozwiązuje problem Memory Leak z event listenerami
 let taskToDeleteId = null; 
 
 // --- GŁÓWNA INICJALIZACJA ---
@@ -16,15 +15,13 @@ function init() {
     View.renderFullList(currentTasks);
     View.renderStats(Store.calculateStats(currentTasks));
 
-    // 2. Prosimy o uprawnienia do powiadomień
-    if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
-    }
+    // ZMIANA: Usunięto stąd Notification.requestPermission(), 
+    // aby uniknąć błędu w konsoli przy starcie strony.
 
-    // 3. Podpinamy zdarzenia globalne (formularz, lista, modal)
+    // 2. Podpinamy zdarzenia globalne (formularz, lista, modal)
     bindEvents();
 
-    // 4. Rejestracja PWA Service Worker
+    // 3. Rejestracja PWA Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
@@ -39,8 +36,7 @@ function bindEvents() {
     View.elements.form.addEventListener('submit', handleAdd);
     View.elements.list.addEventListener('click', handleListActions);
 
-    // Obsługa Modala (Potwierdzenie usunięcia)
-    // Podpinamy to RAZ, a nie przy każdym kliknięciu w kosz (Fix Memory Leak)
+    // Obsługa Modala
     if (View.elements.dialogConfirmBtn) {
         View.elements.dialogConfirmBtn.addEventListener('click', confirmDeleteTask);
     }
@@ -57,6 +53,11 @@ function bindEvents() {
 // --- LOGIKA: DODAWANIE (Async) ---
 async function handleAdd(e) {
     e.preventDefault();
+    
+    // ZMIANA: Prosimy o uprawnienia TUTAJ (reakcja na kliknięcie użytkownika)
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
     
     // Pobieramy dane z formularza przez View
     const { text, date, file } = View.getFormData();
@@ -78,23 +79,18 @@ async function handleAdd(e) {
     }
 
     try {
-        // Zapis do Store (może rzucić błąd jak braknie miejsca)
+        // Zapis do Store
         const { updatedTasks, newTask } = Store.addTask(currentTasks, { 
             text, 
             image: imageBase64, 
             dueDate: date 
         });
         
-        // Aktualizacja stanu
         currentTasks = updatedTasks;
         
-        // OPTYMALIZACJA: Dodajemy tylko jeden element do DOM, zamiast przerysowywać całość
+        // OPTYMALIZACJA: Dodajemy tylko jeden element do DOM
         View.appendTaskNode(newTask);
-        
-        // Aktualizacja licznika
         View.renderStats(Store.calculateStats(currentTasks));
-        
-        // Reset formularza
         View.resetForm();
         View.showToast("Dodano zadanie!", "success");
 
@@ -102,14 +98,12 @@ async function handleAdd(e) {
         Helpers.scheduleNotification(newTask);
 
     } catch (error) {
-        // Obsługa błędu LocalStorage (np. Quota Exceeded)
         View.showToast(error.message, "error");
     }
 }
 
 // --- LOGIKA: AKCJE NA LIŚCIE (Delegacja zdarzeń) ---
 function handleListActions(e) {
-    // Sprawdzamy co kliknięto
     const item = e.target.closest('.todo-item');
     if (!item) return;
     
@@ -118,20 +112,17 @@ function handleListActions(e) {
 
     // 1. DELETE (Otwiera Modal)
     if (e.target.closest('.delete-btn')) {
-        taskToDeleteId = id; // Zapamiętujemy ID globalnie
-        View.elements.dialog.showModal(); // Pokazujemy natywny dialog
+        taskToDeleteId = id;
+        View.elements.dialog.showModal();
         return;
     }
 
-    // 2. EDIT (Pełny CRUD)
+    // 2. EDIT
     if (e.target.closest('.edit-btn')) {
-        // Tutaj używamy prompt dla prostoty, ale można to zamienić na drugi modal
         const newText = prompt("Edytuj treść zadania:", task.text);
-        
         if (newText !== null && newText.trim() !== "" && newText !== task.text) {
             try {
                 currentTasks = Store.updateTaskContent(currentTasks, id, newText.trim());
-                // Aktualizujemy tylko tekst w DOM
                 View.updateTaskNode(id, { type: 'text', value: newText.trim() });
                 View.showToast("Zaktualizowano!", "success");
             } catch (err) {
@@ -148,10 +139,9 @@ function handleListActions(e) {
         return;
     }
 
-    // 4. TOGGLE (Kliknięcie w treść/checkbox)
+    // 4. TOGGLE
     if (e.target.closest('.todo-content')) {
         currentTasks = Store.toggleTask(currentTasks, id);
-        // Aktualizujemy tylko klasę w DOM
         View.updateTaskNode(id, { type: 'toggle' });
         View.renderStats(Store.calculateStats(currentTasks));
     }
@@ -159,24 +149,21 @@ function handleListActions(e) {
 
 // --- LOGIKA: USUWANIE (Potwierdzone w Modalu) ---
 function confirmDeleteTask() {
-    if (!taskToDeleteId) return; // Zabezpieczenie
+    if (!taskToDeleteId) return;
 
     currentTasks = Store.removeTask(currentTasks, taskToDeleteId);
-    View.removeTaskNode(taskToDeleteId); // Usuwamy element z DOM
+    View.removeTaskNode(taskToDeleteId);
     View.renderStats(Store.calculateStats(currentTasks));
     View.showToast("Usunięto zadanie", "info");
 
-    // Zamknięcie i czyszczenie
     View.elements.dialog.close();
     taskToDeleteId = null;
 }
 
 // --- LOGIKA: USUWANIE GRUPOWE ---
 function handleClearCompleted() {
-    // Tu dla prostoty używamy confirm, ale w wersji PRO można też użyć modala
     if (confirm("Usunąć wszystkie ukończone zadania?")) {
         currentTasks = Store.removeCompleted(currentTasks);
-        // Tutaj musimy przerysować listę, bo zniknęło wiele elementów
         View.renderFullList(currentTasks);
         View.renderStats(Store.calculateStats(currentTasks));
         View.showToast("Wyczyszczono listę", "success");

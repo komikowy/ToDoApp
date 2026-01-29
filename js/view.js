@@ -1,17 +1,16 @@
 // --- IMPORTY POMOCNICZE ---
-// Zakładam, że helpers.js istnieje (stworzymy go w kolejnym kroku, jeśli go nie masz)
-// Jeśli jeszcze go nie masz, kod zadziała, ale przycisk kalendarza nie zareaguje.
+// Zakładam, że helpers.js istnieje.
 
 export const elements = {
     list: document.getElementById('todo-list'),
     input: document.getElementById('todo-input'),
-    dateInput: document.getElementById('todo-date'), // NOWOŚĆ
-    fileInput: document.getElementById('todo-image'), // NOWOŚĆ
+    dateInput: document.getElementById('todo-date'),
+    fileInput: document.getElementById('todo-image'),
     form: document.getElementById('todo-form'),
     stats: document.getElementById('stats-counter'),
     clearBtn: document.getElementById('clear-completed'),
     
-    // NOWE ELEMENTY UI
+    // ELEMENTY UI
     dialog: document.getElementById('confirm-dialog'),
     dialogConfirmBtn: document.getElementById('dialog-confirm'),
     dialogCancelBtn: document.getElementById('dialog-cancel'),
@@ -33,7 +32,6 @@ export function showToast(message, type = 'info') {
 }
 
 // --- TWORZENIE ELEMENTU (Core Logic) ---
-// Ta funkcja buduje HTML bezpiecznie, bez innerHTML
 function createTodoItem(task) {
     const li = document.createElement('li');
     li.className = `todo-item ${task.done ? 'completed' : ''}`;
@@ -53,11 +51,11 @@ function createTodoItem(task) {
 
     const span = document.createElement('span');
     span.className = 'text';
-    span.textContent = task.text; // Bezpieczne wstawianie tekstu!
+    span.textContent = task.text; 
 
     textContainer.appendChild(span);
 
-    // Data wykonania (jeśli użytkownik wybrał)
+    // Data wykonania (jeśli jest)
     if (task.dueDate) {
         const dateSpan = document.createElement('span');
         dateSpan.className = 'date-info';
@@ -68,7 +66,6 @@ function createTodoItem(task) {
         textContainer.appendChild(dateSpan);
     }
 
-    // Składanie lewej strony
     content.appendChild(checkbox);
     content.appendChild(textContainer);
 
@@ -79,20 +76,44 @@ function createTodoItem(task) {
         img.className = 'img-preview';
         img.alt = 'Załącznik';
         img.title = 'Kliknij, aby powiększyć';
-        // Prosty podgląd w nowej karcie
+        
+        // --- POPRAWKA CSP (Bezpieczny podgląd) ---
         img.onclick = (e) => {
             e.stopPropagation();
-            const win = window.open();
-            win.document.write(`<img src="${task.image}" style="max-width:100%">`);
+            const win = window.open("", "_blank");
+            
+            // Inicjujemy puste okno
+            win.document.write('<!DOCTYPE html><html lang="pl"><head><title>Podgląd</title></head><body></body></html>');
+            
+            // Tworzymy element programowo (zgodne z CSP)
+            const image = win.document.createElement('img');
+            image.src = task.image;
+            
+            // Style ustawiane przez JS są dozwolone
+            image.style.maxWidth = "100%";
+            image.style.display = "block";
+            image.style.margin = "0 auto";
+            
+            // Stylizacja tła okna
+            win.document.body.style.backgroundColor = "#222";
+            win.document.body.style.margin = "0";
+            win.document.body.style.display = "flex";
+            win.document.body.style.justifyContent = "center";
+            win.document.body.style.alignItems = "center";
+            win.document.body.style.minHeight = "100vh";
+
+            win.document.body.appendChild(image);
+            win.document.close();
         };
+        // ------------------------------------------
+
         content.appendChild(img);
     }
 
-    // 2. Kontener akcji (prawa strona - przyciski)
+    // 2. Kontener akcji (prawa strona)
     const actions = document.createElement('div');
     actions.className = 'actions';
 
-    // Helper do tworzenia przycisków
     const createBtn = (cls, icon, title) => {
         const btn = document.createElement('button');
         btn.className = `action-btn ${cls}`;
@@ -101,16 +122,13 @@ function createTodoItem(task) {
         return btn;
     };
 
-    // Przycisk Kalendarza (tylko jeśli jest data)
     if (task.dueDate) {
         actions.appendChild(createBtn('calendar-btn', '📆', 'Pobierz do kalendarza'));
     }
 
-    // Edycja i Usuwanie
     actions.appendChild(createBtn('edit-btn', '✏️', 'Edytuj'));
     actions.appendChild(createBtn('delete-btn', '🗑', 'Usuń'));
 
-    // Składanie całości
     li.appendChild(content);
     li.appendChild(actions);
 
@@ -119,9 +137,8 @@ function createTodoItem(task) {
 
 // --- OPTYMALIZACJA RENDEROWANIA ---
 
-// Renderuje całą listę (używa DocumentFragment dla wydajności)
 export function renderFullList(tasks) {
-    elements.list.innerHTML = ''; // Czyścimy listę
+    elements.list.innerHTML = ''; 
     
     if (tasks.length === 0) {
         const emptyMsg = document.createElement('div');
@@ -131,39 +148,29 @@ export function renderFullList(tasks) {
         return;
     }
 
-    // Fragment to "wirtualny kontener" - wrzucenie go do DOM wywołuje render tylko raz
     const fragment = document.createDocumentFragment();
-    
     tasks.forEach(task => {
         fragment.appendChild(createTodoItem(task));
     });
-
     elements.list.appendChild(fragment);
 }
 
-// Dodaje pojedyncze zadanie na górę (bez przerysowywania całej listy)
 export function appendTaskNode(task) {
-    // Usuń komunikat "Brak zadań" jeśli istnieje
     const emptyState = elements.list.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
 
     const li = createTodoItem(task);
-    elements.list.prepend(li); // Dodaj na początek
+    elements.list.prepend(li);
 }
 
-// Usuwa pojedyncze zadanie z DOM
 export function removeTaskNode(id) {
     const item = elements.list.querySelector(`.todo-item[data-id="${id}"]`);
     if (item) {
-        // Opcjonalnie: prosta animacja wyjścia
         item.style.opacity = '0';
         setTimeout(() => item.remove(), 200);
     }
-    
-    // Jeśli usunięto ostatnie, pokaż Empty State (obsługiwane przy odświeżeniu lub w renderStats)
 }
 
-// Aktualizuje węzeł (Partial Update)
 export function updateTaskNode(id, changes) {
     const item = elements.list.querySelector(`.todo-item[data-id="${id}"]`);
     if (!item) return;
@@ -191,7 +198,6 @@ export function renderStats({ total, completed }) {
         }
     }
     
-    // Sprawdzenie czy lista jest pusta po usunięciu
     if (total === 0 && !elements.list.querySelector('.empty-state')) {
         const emptyMsg = document.createElement('div');
         emptyMsg.className = 'empty-state';
@@ -204,7 +210,6 @@ export function resetForm() {
     elements.form.reset();
 }
 
-// Pobiera wszystkie dane z formularza
 export function getFormData() {
     return {
         text: elements.input.value.trim(),
