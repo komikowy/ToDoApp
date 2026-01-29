@@ -25,49 +25,61 @@ export function showToast(message, type = 'info') {
     
     elements.toastContainer.appendChild(toast);
     
-    // Auto usuwanie po 3 sekundach
     setTimeout(() => {
         toast.remove();
     }, 3000);
 }
 
-// --- TWORZENIE ELEMENTU (Core Logic) ---
+// --- TWORZENIE ELEMENTU (Nowy układ Grid) ---
 function createTodoItem(task) {
     const li = document.createElement('li');
     li.className = `todo-item ${task.done ? 'completed' : ''}`;
     li.dataset.id = task.id;
 
-    // 1. Kontener treści (lewa strona)
-    const content = document.createElement('div');
-    content.className = 'todo-content';
-
-    // Checkbox
+    // 1. KOLUMNA LEWA: Checkbox
     const checkbox = document.createElement('div');
     checkbox.className = 'custom-checkbox';
 
-    // Tekst i Data
+    // 2. KOLUMNA ŚRODKOWA GÓRA: Treść + Data dodania
     const textContainer = document.createElement('div');
     textContainer.className = 'text-container';
 
+    // Treść zadania
     const span = document.createElement('span');
     span.className = 'text';
-    span.textContent = task.text; 
+    span.textContent = task.text;
+
+    // Data dodania (NOWOŚĆ)
+    // Jeśli zadanie nie ma createdAt (stare zadania), używamy task.id
+    const createdTimestamp = task.createdAt || task.id;
+    const createdDate = new Date(createdTimestamp).toLocaleDateString('pl-PL', {
+        day: 'numeric', month: 'short'
+    });
+    
+    const createdInfo = document.createElement('span');
+    createdInfo.className = 'created-at';
+    createdInfo.textContent = `Dodano: ${createdDate}`;
 
     textContainer.appendChild(span);
+    textContainer.appendChild(createdInfo);
 
-    // Data wykonania (jeśli jest)
+    // 3. KOLUMNA ŚRODKOWA DÓŁ: Termin wykonania
+    const dueDateContainer = document.createElement('div');
+    dueDateContainer.className = 'due-date-container';
+    
     if (task.dueDate) {
         const dateSpan = document.createElement('span');
         dateSpan.className = 'date-info';
         const formattedDate = new Date(task.dueDate).toLocaleString('pl-PL', {
-            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+            day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         dateSpan.textContent = `📅 ${formattedDate}`;
-        textContainer.appendChild(dateSpan);
+        dueDateContainer.appendChild(dateSpan);
     }
 
-    content.appendChild(checkbox);
-    content.appendChild(textContainer);
+    // 4. KOLUMNA PRAWA: Panel (Zdjęcie + Akcje)
+    const rightPanel = document.createElement('div');
+    rightPanel.className = 'right-panel';
 
     // Zdjęcie (jeśli jest)
     if (task.image) {
@@ -77,40 +89,29 @@ function createTodoItem(task) {
         img.alt = 'Załącznik';
         img.title = 'Kliknij, aby powiększyć';
         
-        // --- POPRAWKA CSP (Bezpieczny podgląd) ---
+        // Bezpieczny podgląd (Fix CSP)
         img.onclick = (e) => {
             e.stopPropagation();
             const win = window.open("", "_blank");
-            
-            // Inicjujemy puste okno
             win.document.write('<!DOCTYPE html><html lang="pl"><head><title>Podgląd</title></head><body></body></html>');
-            
-            // Tworzymy element programowo (zgodne z CSP)
             const image = win.document.createElement('img');
             image.src = task.image;
-            
-            // Style ustawiane przez JS są dozwolone
             image.style.maxWidth = "100%";
             image.style.display = "block";
             image.style.margin = "0 auto";
-            
-            // Stylizacja tła okna
             win.document.body.style.backgroundColor = "#222";
             win.document.body.style.margin = "0";
             win.document.body.style.display = "flex";
             win.document.body.style.justifyContent = "center";
             win.document.body.style.alignItems = "center";
             win.document.body.style.minHeight = "100vh";
-
             win.document.body.appendChild(image);
             win.document.close();
         };
-        // ------------------------------------------
-
-        content.appendChild(img);
+        rightPanel.appendChild(img);
     }
 
-    // 2. Kontener akcji (prawa strona)
+    // Akcje (Przyciski)
     const actions = document.createElement('div');
     actions.className = 'actions';
 
@@ -129,8 +130,13 @@ function createTodoItem(task) {
     actions.appendChild(createBtn('edit-btn', '✏️', 'Edytuj'));
     actions.appendChild(createBtn('delete-btn', '🗑', 'Usuń'));
 
-    li.appendChild(content);
-    li.appendChild(actions);
+    rightPanel.appendChild(actions);
+
+    // SKŁADANIE CAŁOŚCI (Grid wymaga bezpośrednich dzieci w li)
+    li.appendChild(checkbox);        // Grid Col 1
+    li.appendChild(textContainer);   // Grid Col 2 Row 1
+    li.appendChild(dueDateContainer);// Grid Col 2 Row 2
+    li.appendChild(rightPanel);      // Grid Col 3
 
     return li;
 }

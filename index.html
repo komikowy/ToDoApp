@@ -6,7 +6,7 @@
     <title>Pro ToDo PWA</title>
     
     <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; script-src 'self'; object-src 'none';">
+          content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; script-src 'self'; object-src 'none';">
 
     <meta name="description" content="Zaawansowana lista zadań PWA offline.">
     <meta name="theme-color" content="#007bff">
@@ -21,27 +21,40 @@
 
     <div class="app-container">
         <header>
-    <h1>Moje Zadania</h1>
-    <div class="header-row">
-        <div class="stats" id="stats-counter">Ładowanie...</div>
-        <button id="notify-btn" class="icon-btn" aria-label="Włącz powiadomienia">🔕</button>
-    </div>
-</header>
+            <h1>Moje Zadania</h1>
+            <div class="header-row">
+                <div class="stats" id="stats-counter">Ładowanie...</div>
+                <button id="notify-btn" class="icon-btn" aria-label="Włącz powiadomienia">🔕</button>
+            </div>
+        </header>
 
         <form id="todo-form">
-    <div class="input-group">
-        <input type="text" id="todo-input" placeholder="Co robimy?" autocomplete="off">
-        
-        <div class="form-extras">
-            <input type="datetime-local" id="todo-date" aria-label="Termin wykonania">
+            <div class="input-group">
+                <input type="text" id="todo-input" placeholder="Co robimy?" autocomplete="off">
+                
+                <div class="form-extras">
+                    <input type="datetime-local" id="todo-date" aria-label="Termin wykonania">
+                    
+                    <label for="todo-image" class="file-label" title="Dodaj zdjęcie">📷</label>
+                    <input type="file" id="todo-image" accept="image/*" class="hidden">
+                </div>
+            </div>
             
-            <label for="todo-image" class="file-label" title="Dodaj zdjęcie">📷</label>
-            <input type="file" id="todo-image" accept="image/*" class="hidden">
+            <button type="submit" id="add-btn">Dodaj</button>
+        </form>
+
+        <div class="filters-container">
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">Wszystkie</button>
+                <button class="filter-btn" data-filter="active">Do zrobienia</button>
+                <button class="filter-btn" data-filter="completed">Ukończone</button>
+            </div>
+            
+            <label class="sort-label">
+                <input type="checkbox" id="sort-toggle"> 
+                <span>⏳ Najpilniejsze</span>
+            </label>
         </div>
-    </div>
-    
-    <button type="submit" id="add-btn">Dodaj</button>
-</form>
 
         <ul id="todo-list" class="todo-list"></ul>
 

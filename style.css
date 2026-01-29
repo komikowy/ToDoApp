@@ -18,136 +18,99 @@ body {
     min-height: 100vh;
 }
 
-/* --- LAYOUT (Mobile First) --- */
 .app-container {
     width: 100%;
     max-width: 100%;
     padding: 15px;
     background: var(--card-bg);
-    padding-bottom: 100px; /* Miejsce na toasty */
+    padding-bottom: 100px;
 }
 
 header { text-align: center; margin: 10px 0 20px; }
+.header-row { display: flex; justify-content: center; align-items: center; gap: 10px; }
 h1 { font-size: 1.8rem; margin-bottom: 5px; font-weight: 700; }
 .stats { font-size: 0.9rem; color: #888; }
+.icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 50%; }
 
-/* --- Poprawka Nagłówka --- */
-.header-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Przycisk ikonki (Dzwonek) */
-.icon-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    transition: background 0.2s;
-}
-.icon-btn:hover {
-    background-color: rgba(0,0,0,0.05);
-}
-
-/* --- FORMULARZ (PIONOWY NA MOBILE) --- */
-#todo-form {
-    display: flex;
-    flex-direction: column; /* Wymuszamy pion na telefonie */
-    gap: 12px;
-    margin-bottom: 25px;
-}
-
-.input-group {
-    display: flex;
-    flex-direction: column; /* Elementy formularza jeden pod drugim */
-    gap: 10px;
-    width: 100%;
-}
-
-/* Pole tekstowe */
-input[type="text"] {
-    width: 100%;
-    padding: 14px;
-    border: 2px solid #eee;
-    border-radius: 12px;
-    font-size: 16px; /* 16px zapobiega zoomowaniu na iPhone */
-    outline: none;
-    background: #f9f9f9;
-}
+/* --- FORMULARZ --- */
+#todo-form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+.input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+input[type="text"] { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 16px; outline: none; background: #f9f9f9; }
 input[type="text"]:focus { border-color: var(--primary); background: #fff; }
 
-/* Kontener na Datę i Zdjęcie (w jednym rzędzie) */
-.form-extras {
+.form-extras { display: flex; gap: 10px; }
+#todo-date { flex-grow: 1; border: 2px solid #eee; border-radius: 12px; padding: 10px; font-size: 14px; background: #f9f9f9; min-height: 48px; }
+.file-label { background: var(--gray-light); border-radius: 12px; width: 50px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; flex-shrink: 0; }
+button#add-btn { width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
+
+/* --- FILTRY I SORTOWANIE (NOWOŚĆ) --- */
+.filters-container {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
-/* Pole daty - FIX DLA IOS */
-#todo-date {
-    flex-grow: 1;
-    border: 2px solid #eee;
-    border-radius: 12px;
-    padding: 12px;
-    font-size: 14px;
-    background: #f9f9f9;
-    min-height: 48px; /* Ważne dla iOS, żeby palec trafił */
-    appearance: none; /* Reset stylu iOS */
-    -webkit-appearance: none;
-    position: relative;
+.filter-group {
+    display: flex;
+    background: #eee;
+    padding: 4px;
+    border-radius: 10px;
 }
 
-/* Przycisk zdjęcia */
-.file-label {
-    background: var(--gray-light);
-    border-radius: 12px;
-    width: 50px;
-    height: 48px; /* Dopasowanie do wysokości inputa */
+.filter-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.sort-label {
+    font-size: 0.85rem;
+    color: #555;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 5px;
     cursor: pointer;
-    font-size: 1.4rem;
-    flex-shrink: 0;
 }
 
-/* Główny przycisk Dodaj */
-button#add-btn {
-    width: 100%;
-    padding: 15px;
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-}
-
-/* --- LISTA ZADAŃ (Grid Layout) --- */
+/* --- LISTA ZADAŃ (NOWY UKŁAD GRID) --- */
 ul { list-style: none; }
 
 .todo-item {
     background: #fff;
     border: 1px solid #f0f0f0;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 12px;
     margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    
+    /* SIATKA LAYOUTU: 3 Kolumny */
     display: grid;
-    /* Siatka: Checkbox | Treść | Zdjęcie */
-    grid-template-columns: 30px 1fr auto; 
-    grid-template-rows: auto auto;
-    gap: 8px 12px;
+    grid-template-columns: 30px 1fr auto; /* Checkbox | Treść | Prawa kolumna */
+    grid-template-rows: auto auto; /* Dwa rzędy dla treści */
+    gap: 5px 10px;
+    position: relative;
     align-items: start;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 }
 
 /* 1. Checkbox (Lewa kolumna) */
 .custom-checkbox {
+    grid-column: 1;
+    grid-row: 1 / span 2; /* Na całą wysokość */
     width: 24px;
     height: 24px;
     border: 2px solid #ddd;
@@ -155,90 +118,115 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 2px;
+    margin-top: 4px;
     cursor: pointer;
 }
 
-/* 2. Treść (Środek) */
+/* 2. Treść (Środek góra) */
 .text-container {
+    grid-column: 2;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-height: 28px;
 }
-.text { font-size: 1rem; line-height: 1.4; color: #333; font-weight: 500; }
 
-/* 3. Zdjęcie (Prawa góra) */
+.text { 
+    font-size: 1.05rem; 
+    line-height: 1.3; 
+    color: #333; 
+    font-weight: 600; 
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+/* Data dodania (Pod tekstem) */
+.created-at {
+    font-size: 0.7rem;
+    color: #aaa;
+}
+
+/* 3. Termin (Środek dół - Lewy dolny róg sekcji treści) */
+.due-date-container {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    margin-top: 8px;
+}
+
+.date-info {
+    font-size: 0.75rem;
+    color: #555;
+    background: #f1f3f5;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+/* 4. Prawa Kolumna (Zdjęcie + Akcje w pionie) */
+.right-panel {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 50px;
+}
+
+/* Zdjęcie (Na górze prawej kolumny) */
 .img-preview {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid #eee;
-    grid-column: 3;
-    grid-row: 1 / span 2; /* Zajmuje 2 rzędy */
+    cursor: zoom-in;
 }
 
-/* Data pod tekstem */
-.date-info {
-    font-size: 0.75rem;
-    color: #888;
-    margin-top: 4px;
-    background: #f5f5f5;
-    padding: 2px 6px;
-    border-radius: 4px;
-    align-self: flex-start;
-    display: inline-block;
-}
-
-/* 4. Przyciski akcji (Nowy rząd na dole) */
+/* Przyciski akcji (Pod zdjęciem) */
 .actions {
-    grid-column: 1 / -1; /* Na całą szerokość */
     display: flex;
-    justify-content: flex-end; /* Do prawej */
-    gap: 15px;
-    padding-top: 8px;
-    border-top: 1px solid #f9f9f9;
-    margin-top: 5px;
+    gap: 8px;
+    justify-content: center;
 }
 
 .action-btn {
     background: none;
     border: none;
     font-size: 1.2rem;
-    padding: 5px;
-    color: #666;
+    padding: 2px;
+    color: #888;
+    cursor: pointer;
 }
-.delete-btn { color: var(--danger); }
+.delete-btn { color: var(--danger); opacity: 0.8; }
+.calendar-btn { color: var(--primary); }
 
 /* --- STANY --- */
 .todo-item.completed .text { text-decoration: line-through; color: #bbb; }
 .todo-item.completed .custom-checkbox { background: var(--primary); border-color: var(--primary); }
 .todo-item.completed .custom-checkbox::after { content: '✔'; color: white; font-size: 14px; }
-.todo-item.completed { opacity: 0.8; }
+.todo-item.completed { opacity: 0.75; }
 
-/* --- UI COMPONENTS --- */
+/* Inne elementy */
 .hidden { display: none !important; }
 #clear-completed { width: 100%; margin-top: 20px; background: #f1f3f5; color: #555; border: none; padding: 12px; border-radius: 12px; font-weight: 600; }
-.empty-state { text-align: center; padding: 40px 0; color: #ccc; }
+.empty-state { text-align: center; padding: 40px 0; color: #ccc; grid-column: 1 / -1; }
 dialog { border: none; border-radius: 16px; padding: 20px; width: 85%; max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
 dialog::backdrop { background: rgba(0,0,0,0.5); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
 .btn-danger { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; }
 .btn-secondary { background: #eee; border: none; padding: 8px 16px; border-radius: 8px; }
-
-/* Toast */
 #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
 .toast { background: #333; color: white; padding: 12px; border-radius: 8px; font-size: 0.9rem; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: slideUp 0.3s; }
 .toast.error { background: #dc3545; }
 .toast.success { background: #28a745; }
 @keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 
-/* --- DESKTOP (Ekrany > 600px) --- */
 @media (min-width: 600px) {
     .app-container { max-width: 500px; border-radius: 16px; padding: 40px; }
     #todo-form { flex-direction: row; flex-wrap: wrap; }
     .input-group { width: auto; flex-grow: 1; flex-direction: row; }
-    .form-extras { width: auto; }
-    button#add-btn { width: auto; padding: 0 25px; }
 }
