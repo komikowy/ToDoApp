@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToDoApp</title>
+    <title>Pro ToDo PWA</title>
     
     <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; style-src 'self'; img-src 'self' data: https:; script-src 'self'; object-src 'none';">
+          content="default-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; script-src 'self'; object-src 'none';">
 
-    <meta name="description" content="Szybka i bezpieczna lista zadań offline.">
+    <meta name="description" content="Zaawansowana lista zadań PWA offline.">
     <meta name="theme-color" content="#007bff">
 
     <link rel="icon" href="data:,">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -25,7 +26,15 @@
         </header>
 
         <form id="todo-form">
-            <input type="text" id="todo-input" placeholder="Co masz do zrobienia?" autocomplete="off">
+            <div class="input-group">
+                <input type="text" id="todo-input" placeholder="Co robimy?" autocomplete="off">
+                
+                <input type="datetime-local" id="todo-date" aria-label="Termin wykonania">
+                
+                <label for="todo-image" class="file-label" title="Dodaj zdjęcie">📷</label>
+                <input type="file" id="todo-image" accept="image/*" class="hidden">
+            </div>
+            
             <button type="submit" id="add-btn">Dodaj</button>
         </form>
 
@@ -36,11 +45,24 @@
         </button>
 
         <footer>
-    <p class="footer-text">
-        © 2026 ToDoApp PWA Project
-    </p>
-</footer>
+            <p class="footer-text">
+                © 2026 ToDoApp PWA Project
+            </p>
+        </footer>
     </div>
+
+    <div id="toast-container"></div>
+
+    <dialog id="confirm-dialog">
+        <div class="dialog-content">
+            <h3>Jesteś pewien?</h3>
+            <p>Tej operacji nie można cofnąć.</p>
+            <div class="dialog-actions">
+                <button id="dialog-cancel" class="btn-secondary">Anuluj</button>
+                <button id="dialog-confirm" class="btn-danger">Usuń</button>
+            </div>
+        </div>
+    </dialog>
 
     <script type="module" src="./js/app.js"></script>
 </body>

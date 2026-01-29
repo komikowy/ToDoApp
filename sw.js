@@ -1,4 +1,5 @@
-const CACHE_NAME = 'todo-pwa-final-v1';
+const CACHE_NAME = 'todo-pro-offline-v2'; // Zmieniono nazwę, aby wymusić aktualizację u użytkowników
+
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -7,29 +8,42 @@ const ASSETS_TO_CACHE = [
     './js/app.js',
     './js/store.js',
     './js/view.js',
-    'https://cdn-icons-png.flaticon.com/512/7692/7692809.png'
+    './js/helpers.js',       // <--- WAŻNE: Nowy plik logiczny
+    './icons/icon-192.png',  // <--- WAŻNE: Lokalne ikony
+    './icons/icon-512.png'   // <--- WAŻNE: Lokalne ikony
 ];
 
-// Instalacja
+// 1. Instalacja (Pobieranie plików do pamięci urządzenia)
 self.addEventListener('install', (e) => {
-    self.skipWaiting();
-    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE)));
+    self.skipWaiting(); // Wymusza natychmiastową aktywację nowego SW
+    e.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            console.log('[SW] Caching app shell');
+            return cache.addAll(ASSETS_TO_CACHE);
+        })
+    );
 });
 
-// Aktywacja (czyszczenie starego cache)
+// 2. Aktywacja (Czyszczenie starego Cache po aktualizacji)
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then(keys => Promise.all(
             keys.map(key => key !== CACHE_NAME ? caches.delete(key) : null)
         ))
     );
-    return self.clients.claim();
+    return self.clients.claim(); // Przejmuje kontrolę nad otwartymi kartami
 });
 
-// Pobieranie (Cache First)
+// 3. Pobieranie (Strategia: Cache First, Network Fallback)
 self.addEventListener('fetch', (e) => {
+    // Ignorujemy żądania inne niż GET oraz te, które nie są http (np. chrome-extension)
     if (e.request.method !== 'GET' || !e.request.url.startsWith('http')) return;
+
     e.respondWith(
-        caches.match(e.request).then(res => res || fetch(e.request))
+        caches.match(e.request).then(cachedResponse => {
+            // Jeśli plik jest w cache (offline), zwróć go.
+            // Jeśli nie, spróbuj pobrać z Internetu.
+            return cachedResponse || fetch(e.request);
+        })
     );
 });

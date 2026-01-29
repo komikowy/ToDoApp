@@ -4,6 +4,8 @@
     --card-bg: #ffffff;
     --text: #333;
     --danger: #ff4d4d;
+    --success: #28a745;
+    --gray-light: #f1f3f5;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -16,147 +18,253 @@ body {
     min-height: 100vh;
 }
 
-/* --- MOBILE FIRST (Domyślny widok) --- */
+/* --- LAYOUT (Mobile First) --- */
 .app-container {
     width: 100%;
     max-width: 100%;
     padding: 20px;
     background: var(--card-bg);
+    padding-bottom: 80px; /* Miejsce na toasty na dole */
 }
 
 header { text-align: center; margin: 10px 0 25px; }
 h1 { font-size: 1.8rem; margin-bottom: 5px; }
 .stats { font-size: 0.9rem; color: #888; }
 
-#todo-form { display: flex; gap: 10px; margin-bottom: 25px; height: 50px; }
+/* --- FORMULARZ (Zaktualizowany) --- */
+#todo-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+}
 
+.input-group {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Pole tekstowe */
 input[type="text"] {
     flex-grow: 1;
-    padding: 0 15px;
+    padding: 12px 15px;
     border: 2px solid #eee;
     border-radius: 12px;
-    font-size: 16px; /* Zapobiega zoom na iOS */
+    font-size: 16px;
     outline: none;
+    transition: border-color 0.2s;
 }
 input[type="text"]:focus { border-color: var(--primary); }
 
+/* Pole daty (Kalendarz) */
+#todo-date {
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 0 5px;
+    color: #555;
+    cursor: pointer;
+    max-width: 45px; /* Na mobile pokazujemy tylko ikonkę kalendarza */
+}
+
+/* Przycisk zdjęcia (Aparat) */
+.file-label {
+    background: var(--gray-light);
+    border-radius: 12px;
+    width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.file-label:hover { background: #e9ecef; }
+
+/* Przycisk Dodaj (Główny) */
 button#add-btn {
-    padding: 0 20px;
+    width: 100%;
+    padding: 12px;
     background-color: var(--primary);
     color: white;
     border: none;
     border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
+    font-size: 1rem;
+    margin-top: 5px;
 }
 
+/* --- LISTA ZADAŃ --- */
 ul { list-style: none; }
 
 .todo-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column; /* Na mobile układ pionowy */
     background: #fff;
     border-bottom: 1px solid #f0f0f0;
     padding: 16px 0;
+    gap: 10px;
     animation: fadeIn 0.3s ease-out;
 }
 
 .todo-content {
     display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-grow: 1;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
     cursor: pointer;
-    user-select: none;
 }
 
+/* Checkbox */
 .custom-checkbox {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border: 2px solid #ddd;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.text-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .text { font-size: 1.1rem; word-break: break-word; line-height: 1.4; }
 
-/* Stan ukończony */
+/* Miniaturka zdjęcia */
+.img-preview {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    margin-left: auto; /* Pycha zdjęcie do prawej */
+    cursor: zoom-in;
+}
+
+/* Sekcja przycisków akcji */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding-top: 5px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.action-btn:hover { opacity: 1; transform: scale(1.1); }
+.delete-btn { color: var(--danger); opacity: 0.8; }
+
+/* --- STAN UKOŃCZONY --- */
 .todo-item.completed .text { text-decoration: line-through; color: #bbb; }
 .todo-item.completed .custom-checkbox { background: var(--primary); border-color: var(--primary); }
 .todo-item.completed .custom-checkbox::after { content: '✔'; color: white; font-size: 14px; }
+.todo-item.completed .img-preview { opacity: 0.5; filter: grayscale(100%); }
 
-.delete-btn {
-    background: none;
+/* --- MODAL (Dialog) --- */
+dialog {
     border: none;
-    color: var(--danger);
-    font-size: 1.4rem;
-    padding: 10px;
-    cursor: pointer;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 400px;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+}
+dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
+
+dialog h3 { margin-bottom: 10px; color: var(--text); }
+dialog p { margin-bottom: 20px; color: #666; }
+
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.btn-secondary { background: #eee; color: #333; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;}
+.btn-danger { background: var(--danger); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;}
+
+/* --- TOASTY (Powiadomienia) --- */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: max-content;
+    max-width: 90%;
 }
 
+.toast {
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    animation: slideUp 0.3s ease-out;
+    text-align: center;
+}
+.toast.error { background: var(--danger); }
+.toast.success { background: var(--success); }
+.toast.info { background: #17a2b8; }
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- NOWE STYLE (CSP & Features) --- */
+/* --- NARZĘDZIA --- */
+.hidden { display: none !important; }
 
-/* 1. Klasa narzędziowa do ukrywania (zamiast inline style) */
-.hidden {
-    display: none !important;
-}
-
-/* 2. Przycisk usuwania ukończonych */
 #clear-completed {
     width: 100%;
     margin-top: 20px;
-    background-color: #f1f3f5;
+    background-color: var(--gray-light);
     color: #495057;
     border: none;
     padding: 12px;
     border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
 }
+#clear-completed:hover { background-color: #e9ecef; }
 
-#clear-completed:hover {
-    background-color: #e9ecef;
-}
-
-/* 3. Empty State (Pusta lista) */
-.empty-state {
-    text-align: center;
-    padding: 40px 0;
-    color: #adb5bd;
-    font-style: italic;
-    font-size: 1rem;
-}
-
-/* 4. Data pod zadaniem */
-.date-info {
-    font-size: 0.75rem;
-    color: #888;
-    margin-top: 4px;
-    display: block;
-}
+.empty-state { text-align: center; padding: 40px 0; color: #adb5bd; font-style: italic; }
+.date-info { font-size: 0.75rem; color: #888; margin-top: 4px; display: block; font-weight: 500; }
+.footer-text { text-align: center; color: #ccc; font-size: 0.8rem; margin-top: 20px; }
 
 /* --- DESKTOP (Ekrany > 600px) --- */
 @media (min-width: 600px) {
     body { background-color: var(--bg); padding-top: 50px; align-items: flex-start; }
+    
     .app-container {
         max-width: 500px;
         border-radius: 16px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         padding: 40px;
+        padding-bottom: 40px;
     }
-}
 
-/* Styl stopki */
-.footer-text {
-    text-align: center;
-    color: #ccc;
-    font-size: 0.8rem;
-    margin-top: 20px;
+    /* Na desktopie formularz w jednej linii */
+    .input-group { width: auto; flex-grow: 1; }
+    #todo-form { flex-direction: row; }
+    button#add-btn { width: auto; margin-top: 0; padding: 0 25px; }
+    #todo-date { max-width: none; } /* Pełna data na desktopie */
+    
+    /* Układ zadania poziomy */
+    .todo-item { flex-direction: row; align-items: center; }
+    .actions { padding-top: 0; }
 }
