@@ -12,6 +12,9 @@ const ASSETS_TO_CACHE = [
     './js/domain/todoRules.js',
     './js/store/todoStore.js',
     './js/view/todoView.js',
+    './js/view/components/TodoItem.js',
+    './js/view/components/ToastManager.js',
+    './js/view/components/ModalManager.js',
     './icons/icon-192.png',
     './icons/icon-512.png'
 ];
