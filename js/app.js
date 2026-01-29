@@ -5,23 +5,18 @@ import * as Helpers from './helpers.js';
 // Stan aplikacji
 let currentTasks = Store.getTasks();
 const MAX_LENGTH = 200;
-
-// Zmienna przechowująca ID zadania do usunięcia (dla Modala)
 let taskToDeleteId = null; 
 
 // --- GŁÓWNA INICJALIZACJA ---
 function init() {
-    // 1. Renderujemy pełną listę tylko raz na start
     View.renderFullList(currentTasks);
     View.renderStats(Store.calculateStats(currentTasks));
 
-    // ZMIANA: Usunięto stąd Notification.requestPermission(), 
-    // aby uniknąć błędu w konsoli przy starcie strony.
-
-    // 2. Podpinamy zdarzenia globalne (formularz, lista, modal)
     bindEvents();
+    
+    // Sprawdzenie statusu powiadomień przy starcie (żeby ustawić ikonę)
+    updateNotificationIcon();
 
-    // 3. Rejestracja PWA Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
@@ -31,44 +26,86 @@ function init() {
     }
 }
 
-// --- OBSŁUGA ZDARZEŃ (Event Listeners) ---
+// --- OBSŁUGA ZDARZEŃ ---
 function bindEvents() {
     View.elements.form.addEventListener('submit', handleAdd);
     View.elements.list.addEventListener('click', handleListActions);
 
-    // Obsługa Modala
+    // NOWOŚĆ: Obsługa przycisku powiadomień
+    const notifyBtn = document.getElementById('notify-btn');
+    if (notifyBtn) {
+        notifyBtn.addEventListener('click', handleNotificationToggle);
+    }
+
     if (View.elements.dialogConfirmBtn) {
         View.elements.dialogConfirmBtn.addEventListener('click', confirmDeleteTask);
     }
     if (View.elements.dialogCancelBtn) {
         View.elements.dialogCancelBtn.addEventListener('click', () => View.elements.dialog.close());
     }
-
-    // Obsługa przycisku "Wyczyść ukończone"
     if (View.elements.clearBtn) {
         View.elements.clearBtn.addEventListener('click', handleClearCompleted);
     }
 }
 
-// --- LOGIKA: DODAWANIE (Async) ---
+// --- LOGIKA POWIADOMIEŃ (PERMISSIONS API) ---
+function handleNotificationToggle() {
+    if (!("Notification" in window)) {
+        View.showToast("Twoja przeglądarka nie obsługuje powiadomień.", "error");
+        return;
+    }
+
+    if (Notification.permission === "granted") {
+        View.showToast("Powiadomienia są już aktywne ✅", "info");
+        return;
+    }
+
+    if (Notification.permission === "denied") {
+        View.showToast("Powiadomienia są zablokowane w ustawieniach telefonu 🚫", "error");
+        return;
+    }
+
+    // WŁAŚCIWA PROŚBA (Musi być bezpośrednim wynikiem kliknięcia)
+    Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+            View.showToast("Powiadomienia włączone! 🎉", "success");
+            
+            // Testowe powiadomienie
+            new Notification("Test powiadomień", {
+                body: "Działa! Będziemy przypominać o zadaniach.",
+                icon: './icons/icon-192.png'
+            });
+        } else {
+            View.showToast("Nie wyrażono zgody na powiadomienia.", "info");
+        }
+        updateNotificationIcon();
+    });
+}
+
+function updateNotificationIcon() {
+    const btn = document.getElementById('notify-btn');
+    if (!btn || !("Notification" in window)) return;
+
+    if (Notification.permission === 'granted') {
+        btn.textContent = '🔔'; // Aktywne
+    } else {
+        btn.textContent = '🔕'; // Nieaktywne
+    }
+}
+
+// --- LOGIKA: DODAWANIE ---
 async function handleAdd(e) {
     e.preventDefault();
     
-    // ZMIANA: Prosimy o uprawnienia TUTAJ (reakcja na kliknięcie użytkownika)
-    if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
-    }
+    // USUNIĘTO automatyczne żądanie powiadomień stąd!
     
-    // Pobieramy dane z formularza przez View
     const { text, date, file } = View.getFormData();
 
-    // Walidacja
     if (!text) return View.showToast("Wpisz treść zadania!", "error");
     if (text.length > MAX_LENGTH) return View.showToast("Za długi tekst!", "error");
 
     let imageBase64 = null;
 
-    // Przetwarzanie zdjęcia (jeśli jest)
     if (file) {
         try {
             View.showToast("Przetwarzanie zdjęcia...", "info");
@@ -79,7 +116,6 @@ async function handleAdd(e) {
     }
 
     try {
-        // Zapis do Store
         const { updatedTasks, newTask } = Store.addTask(currentTasks, { 
             text, 
             image: imageBase64, 
@@ -87,14 +123,11 @@ async function handleAdd(e) {
         });
         
         currentTasks = updatedTasks;
-        
-        // OPTYMALIZACJA: Dodajemy tylko jeden element do DOM
         View.appendTaskNode(newTask);
         View.renderStats(Store.calculateStats(currentTasks));
         View.resetForm();
         View.showToast("Dodano zadanie!", "success");
 
-        // Powiadomienie
         Helpers.scheduleNotification(newTask);
 
     } catch (error) {
@@ -102,7 +135,7 @@ async function handleAdd(e) {
     }
 }
 
-// --- LOGIKA: AKCJE NA LIŚCIE (Delegacja zdarzeń) ---
+// --- LOGIKA: LISTA ---
 function handleListActions(e) {
     const item = e.target.closest('.todo-item');
     if (!item) return;
@@ -110,14 +143,12 @@ function handleListActions(e) {
     const id = Number(item.dataset.id);
     const task = currentTasks.find(t => t.id === id);
 
-    // 1. DELETE (Otwiera Modal)
     if (e.target.closest('.delete-btn')) {
         taskToDeleteId = id;
         View.elements.dialog.showModal();
         return;
     }
 
-    // 2. EDIT
     if (e.target.closest('.edit-btn')) {
         const newText = prompt("Edytuj treść zadania:", task.text);
         if (newText !== null && newText.trim() !== "" && newText !== task.text) {
@@ -132,14 +163,12 @@ function handleListActions(e) {
         return;
     }
 
-    // 3. KALENDARZ
     if (e.target.closest('.calendar-btn')) {
         Helpers.downloadICS(task);
         View.showToast("Pobrano plik kalendarza", "info");
         return;
     }
 
-    // 4. TOGGLE
     if (e.target.closest('.todo-content')) {
         currentTasks = Store.toggleTask(currentTasks, id);
         View.updateTaskNode(id, { type: 'toggle' });
@@ -147,7 +176,7 @@ function handleListActions(e) {
     }
 }
 
-// --- LOGIKA: USUWANIE (Potwierdzone w Modalu) ---
+// --- LOGIKA: USUWANIE ---
 function confirmDeleteTask() {
     if (!taskToDeleteId) return;
 
@@ -160,7 +189,6 @@ function confirmDeleteTask() {
     taskToDeleteId = null;
 }
 
-// --- LOGIKA: USUWANIE GRUPOWE ---
 function handleClearCompleted() {
     if (confirm("Usunąć wszystkie ukończone zadania?")) {
         currentTasks = Store.removeCompleted(currentTasks);
@@ -170,5 +198,4 @@ function handleClearCompleted() {
     }
 }
 
-// Start aplikacji
 init();

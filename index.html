@@ -21,22 +21,27 @@
 
     <div class="app-container">
         <header>
-            <h1>Moje Zadania</h1>
-            <div class="stats" id="stats-counter">Ładowanie...</div>
-        </header>
+    <h1>Moje Zadania</h1>
+    <div class="header-row">
+        <div class="stats" id="stats-counter">Ładowanie...</div>
+        <button id="notify-btn" class="icon-btn" aria-label="Włącz powiadomienia">🔕</button>
+    </div>
+</header>
 
         <form id="todo-form">
-            <div class="input-group">
-                <input type="text" id="todo-input" placeholder="Co robimy?" autocomplete="off">
-                
-                <input type="datetime-local" id="todo-date" aria-label="Termin wykonania">
-                
-                <label for="todo-image" class="file-label" title="Dodaj zdjęcie">📷</label>
-                <input type="file" id="todo-image" accept="image/*" class="hidden">
-            </div>
+    <div class="input-group">
+        <input type="text" id="todo-input" placeholder="Co robimy?" autocomplete="off">
+        
+        <div class="form-extras">
+            <input type="datetime-local" id="todo-date" aria-label="Termin wykonania">
             
-            <button type="submit" id="add-btn">Dodaj</button>
-        </form>
+            <label for="todo-image" class="file-label" title="Dodaj zdjęcie">📷</label>
+            <input type="file" id="todo-image" accept="image/*" class="hidden">
+        </div>
+    </div>
+    
+    <button type="submit" id="add-btn">Dodaj</button>
+</form>
 
         <ul id="todo-list" class="todo-list"></ul>
 

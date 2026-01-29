@@ -8,7 +8,7 @@
     --gray-light: #f1f3f5;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 
 body {
     background-color: var(--card-bg);
@@ -22,249 +22,223 @@ body {
 .app-container {
     width: 100%;
     max-width: 100%;
-    padding: 20px;
+    padding: 15px;
     background: var(--card-bg);
-    padding-bottom: 80px; /* Miejsce na toasty na dole */
+    padding-bottom: 100px; /* Miejsce na toasty */
 }
 
-header { text-align: center; margin: 10px 0 25px; }
-h1 { font-size: 1.8rem; margin-bottom: 5px; }
+header { text-align: center; margin: 10px 0 20px; }
+h1 { font-size: 1.8rem; margin-bottom: 5px; font-weight: 700; }
 .stats { font-size: 0.9rem; color: #888; }
 
-/* --- FORMULARZ (Zaktualizowany) --- */
+/* --- Poprawka Nagłówka --- */
+.header-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Przycisk ikonki (Dzwonek) */
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+.icon-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+/* --- FORMULARZ (PIONOWY NA MOBILE) --- */
 #todo-form {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column; /* Wymuszamy pion na telefonie */
+    gap: 12px;
     margin-bottom: 25px;
 }
 
 .input-group {
     display: flex;
-    gap: 8px;
+    flex-direction: column; /* Elementy formularza jeden pod drugim */
+    gap: 10px;
     width: 100%;
 }
 
 /* Pole tekstowe */
 input[type="text"] {
-    flex-grow: 1;
-    padding: 12px 15px;
+    width: 100%;
+    padding: 14px;
     border: 2px solid #eee;
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 16px; /* 16px zapobiega zoomowaniu na iPhone */
     outline: none;
-    transition: border-color 0.2s;
+    background: #f9f9f9;
 }
-input[type="text"]:focus { border-color: var(--primary); }
+input[type="text"]:focus { border-color: var(--primary); background: #fff; }
 
-/* Pole daty (Kalendarz) */
+/* Kontener na Datę i Zdjęcie (w jednym rzędzie) */
+.form-extras {
+    display: flex;
+    gap: 10px;
+}
+
+/* Pole daty - FIX DLA IOS */
 #todo-date {
+    flex-grow: 1;
     border: 2px solid #eee;
     border-radius: 12px;
-    padding: 0 5px;
-    color: #555;
-    cursor: pointer;
-    max-width: 45px; /* Na mobile pokazujemy tylko ikonkę kalendarza */
+    padding: 12px;
+    font-size: 14px;
+    background: #f9f9f9;
+    min-height: 48px; /* Ważne dla iOS, żeby palec trafił */
+    appearance: none; /* Reset stylu iOS */
+    -webkit-appearance: none;
+    position: relative;
 }
 
-/* Przycisk zdjęcia (Aparat) */
+/* Przycisk zdjęcia */
 .file-label {
     background: var(--gray-light);
     border-radius: 12px;
-    width: 48px;
+    width: 50px;
+    height: 48px; /* Dopasowanie do wysokości inputa */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     flex-shrink: 0;
-    transition: background 0.2s;
 }
-.file-label:hover { background: #e9ecef; }
 
-/* Przycisk Dodaj (Główny) */
+/* Główny przycisk Dodaj */
 button#add-btn {
     width: 100%;
-    padding: 12px;
+    padding: 15px;
     background-color: var(--primary);
     color: white;
     border: none;
     border-radius: 12px;
     font-weight: 600;
-    cursor: pointer;
     font-size: 1rem;
-    margin-top: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
 }
 
-/* --- LISTA ZADAŃ --- */
+/* --- LISTA ZADAŃ (Grid Layout) --- */
 ul { list-style: none; }
 
 .todo-item {
-    display: flex;
-    flex-direction: column; /* Na mobile układ pionowy */
     background: #fff;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 16px 0;
-    gap: 10px;
-    animation: fadeIn 0.3s ease-out;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: grid;
+    /* Siatka: Checkbox | Treść | Zdjęcie */
+    grid-template-columns: 30px 1fr auto; 
+    grid-template-rows: auto auto;
+    gap: 8px 12px;
+    align-items: start;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 }
 
-.todo-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    width: 100%;
-    cursor: pointer;
-}
-
-/* Checkbox */
+/* 1. Checkbox (Lewa kolumna) */
 .custom-checkbox {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border: 2px solid #ddd;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     margin-top: 2px;
+    cursor: pointer;
 }
 
+/* 2. Treść (Środek) */
 .text-container {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    justify-content: center;
+    min-height: 28px;
 }
+.text { font-size: 1rem; line-height: 1.4; color: #333; font-weight: 500; }
 
-.text { font-size: 1.1rem; word-break: break-word; line-height: 1.4; }
-
-/* Miniaturka zdjęcia */
+/* 3. Zdjęcie (Prawa góra) */
 .img-preview {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid #eee;
-    margin-left: auto; /* Pycha zdjęcie do prawej */
-    cursor: zoom-in;
+    grid-column: 3;
+    grid-row: 1 / span 2; /* Zajmuje 2 rzędy */
 }
 
-/* Sekcja przycisków akcji */
+/* Data pod tekstem */
+.date-info {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 4px;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    align-self: flex-start;
+    display: inline-block;
+}
+
+/* 4. Przyciski akcji (Nowy rząd na dole) */
 .actions {
+    grid-column: 1 / -1; /* Na całą szerokość */
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-end; /* Do prawej */
     gap: 15px;
-    padding-top: 5px;
+    padding-top: 8px;
+    border-top: 1px solid #f9f9f9;
+    margin-top: 5px;
 }
 
 .action-btn {
     background: none;
     border: none;
     font-size: 1.2rem;
-    cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s, transform 0.2s;
+    padding: 5px;
+    color: #666;
 }
-.action-btn:hover { opacity: 1; transform: scale(1.1); }
-.delete-btn { color: var(--danger); opacity: 0.8; }
+.delete-btn { color: var(--danger); }
 
-/* --- STAN UKOŃCZONY --- */
+/* --- STANY --- */
 .todo-item.completed .text { text-decoration: line-through; color: #bbb; }
 .todo-item.completed .custom-checkbox { background: var(--primary); border-color: var(--primary); }
 .todo-item.completed .custom-checkbox::after { content: '✔'; color: white; font-size: 14px; }
-.todo-item.completed .img-preview { opacity: 0.5; filter: grayscale(100%); }
+.todo-item.completed { opacity: 0.8; }
 
-/* --- MODAL (Dialog) --- */
-dialog {
-    border: none;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-    width: 90%;
-    max-width: 400px;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-}
-dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-
-dialog h3 { margin-bottom: 10px; color: var(--text); }
-dialog p { margin-bottom: 20px; color: #666; }
-
-.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.btn-secondary { background: #eee; color: #333; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;}
-.btn-danger { background: var(--danger); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;}
-
-/* --- TOASTY (Powiadomienia) --- */
-#toast-container {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: max-content;
-    max-width: 90%;
-}
-
-.toast {
-    background: #333;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 50px;
-    font-size: 0.9rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    animation: slideUp 0.3s ease-out;
-    text-align: center;
-}
-.toast.error { background: var(--danger); }
-.toast.success { background: var(--success); }
-.toast.info { background: #17a2b8; }
-
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-/* --- NARZĘDZIA --- */
+/* --- UI COMPONENTS --- */
 .hidden { display: none !important; }
+#clear-completed { width: 100%; margin-top: 20px; background: #f1f3f5; color: #555; border: none; padding: 12px; border-radius: 12px; font-weight: 600; }
+.empty-state { text-align: center; padding: 40px 0; color: #ccc; }
+dialog { border: none; border-radius: 16px; padding: 20px; width: 85%; max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+dialog::backdrop { background: rgba(0,0,0,0.5); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+.btn-danger { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; }
+.btn-secondary { background: #eee; border: none; padding: 8px 16px; border-radius: 8px; }
 
-#clear-completed {
-    width: 100%;
-    margin-top: 20px;
-    background-color: var(--gray-light);
-    color: #495057;
-    border: none;
-    padding: 12px;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-}
-#clear-completed:hover { background-color: #e9ecef; }
-
-.empty-state { text-align: center; padding: 40px 0; color: #adb5bd; font-style: italic; }
-.date-info { font-size: 0.75rem; color: #888; margin-top: 4px; display: block; font-weight: 500; }
-.footer-text { text-align: center; color: #ccc; font-size: 0.8rem; margin-top: 20px; }
+/* Toast */
+#toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: #333; color: white; padding: 12px; border-radius: 8px; font-size: 0.9rem; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: slideUp 0.3s; }
+.toast.error { background: #dc3545; }
+.toast.success { background: #28a745; }
+@keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 
 /* --- DESKTOP (Ekrany > 600px) --- */
 @media (min-width: 600px) {
-    body { background-color: var(--bg); padding-top: 50px; align-items: flex-start; }
-    
-    .app-container {
-        max-width: 500px;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        padding: 40px;
-        padding-bottom: 40px;
-    }
-
-    /* Na desktopie formularz w jednej linii */
-    .input-group { width: auto; flex-grow: 1; }
-    #todo-form { flex-direction: row; }
-    button#add-btn { width: auto; margin-top: 0; padding: 0 25px; }
-    #todo-date { max-width: none; } /* Pełna data na desktopie */
-    
-    /* Układ zadania poziomy */
-    .todo-item { flex-direction: row; align-items: center; }
-    .actions { padding-top: 0; }
+    .app-container { max-width: 500px; border-radius: 16px; padding: 40px; }
+    #todo-form { flex-direction: row; flex-wrap: wrap; }
+    .input-group { width: auto; flex-grow: 1; flex-direction: row; }
+    .form-extras { width: auto; }
+    button#add-btn { width: auto; padding: 0 25px; }
 }
