@@ -1,35 +1,34 @@
 const CACHE_NAME = 'todo-enterprise-v1'; // Zmieniono nazwę, aby wymusić aktualizację
 
 const ASSETS_TO_CACHE = [
-    './',
-    './index.html',
-    './style.css',
-    './manifest.json',
-    './js/app.js',
-    './js/helpers.js',
+    '../',
+    '../index.html',
+    '../style.css',
+    '../manifest.json',
+    '../js/app.js',
+    '../js/helpers.js',
 
     // Bootstrap
-    './js/bootstrap/initApp.js',
-
+    '../js/bootstrap/initApp.js',
     // Domain (Reguły biznesowe)
-    './js/domain/todoRules.js',
+    '../js/domain/todoRules.js',
 
     // Services & Stores (Logika i Dane)
-    './js/services/notificationService.js',
-    './js/store/todoStore.js',
-    './js/store/uiStore.js',
+    '../js/services/notificationService.js',
+    '../js/store/todoStore.js',
+    '../js/store/uiStore.js',
 
     // Controllers (Orkiestracja)
-    './js/controllers/todoController.js',
+    '../js/controllers/todoController.js',
     // View & Components (Widok)
-    './js/view/todoView.js',
-    './js/view/components/todoItem.js',
-    './js/view/components/toastManager.js',
-    './js/view/components/modalManager.js',
+    '../js/view/todoView.js',
+    '../js/view/components/todoItem.js',
+    '../js/view/components/toastManager.js',
+    '../js/view/components/modalManager.js',
 
     // Ikony
-    './icons/icon-192.png',
-    './icons/icon-512.png'
+    '../icons/icon-192.png',
+    '../icons/icon-512.png'
 ];
 
 // 1. Instalacja (Pobieranie plików do pamięci urządzenia)
