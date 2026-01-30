@@ -6,14 +6,19 @@ export function validateText(text) {
     return true;
 }
 
-export function createTodo(text, image = null, dueDate = null) {
-    validateText(text);
+export function createTodo(text, date = null, file = null) {
+    if (!text || typeof text !== 'string') {
+        throw new Error("Validation Error: Task text is required and must be a string.");
+    }
+
     return {
-        id: Date.now(),
-        text: text,
-        done: false,
-        image: image,
-        dueDate: dueDate,
-        createdAt: Date.now()
+        id: self.crypto && self.crypto.randomUUID 
+            ? self.crypto.randomUUID() 
+            : 'id-' + Date.now().toString(36) + Math.random().toString(36).substr(2),
+        text: text.trim(),
+        isCompleted: false,
+        createdAt: new Date().toISOString(),
+        dueDate: date || null,
+        file: file || null
     };
 }

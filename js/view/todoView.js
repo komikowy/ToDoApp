@@ -22,11 +22,7 @@ export class TodoView {
         this.filters = document.querySelectorAll('.filter-btn');
         this.sortToggle = document.getElementById('sort-toggle');
 
-        // --- LOGOWANIE STANU ELEMENTÓW ---
-        console.log("   -> Formularz (this.form):", this.form);
-        console.log("   -> Input tekstowy (this.input):", this.input);
-        console.log("   -> Lista (this.list):", this.list);
-        
+        // --- WALIDACJA STRUKTURY HTML ---
         if (!this.form || !this.input || !this.list) {
             console.error("❌ [VIEW ERROR] Brakuje kluczowych elementów w HTML! Sprawdź ID.");
         } else {
@@ -75,7 +71,7 @@ export class TodoView {
     // --- BINDING ---
 
     bindAdd(handler) {
-        if (!this.form) return; // Zabezpieczenie przed błędem, jeśli form nie istnieje
+        if (!this.form) return;
 
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -105,13 +101,15 @@ export class TodoView {
             const item = e.target.closest('.todo-item');
             if (!item) return;
             
-            const id = Number(item.dataset.id);
+            // ⚠️ POPRAWKA: ID jest teraz Stringiem (UUID), więc usuwamy Number()
+            const id = item.dataset.id; 
+            
             const action = e.target.closest('.delete-btn') ? 'delete' :
                            e.target.closest('.edit-btn') ? 'edit' :
                            e.target.closest('.calendar-btn') ? 'calendar' :
                            'toggle';
             
-            console.log(`🖱️ [VIEW] Akcja na liście: ${action}, ID: ${id}`);
+            // console.log(`🖱️ [VIEW] Akcja: ${action}, ID: ${id}`);
             handler(action, id);
         });
     }
@@ -161,6 +159,8 @@ export class TodoView {
 
     resetForm() {
         this.form.reset();
+        // Resetujemy też input pliku, jeśli istnieje, aby można było dodać ten sam plik ponownie
+        if (this.fileInput) this.fileInput.value = '';
     }
 
     _renderEmpty() {
