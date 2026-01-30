@@ -1,15 +1,21 @@
-import { TodoStore } from '../js/store/todoStore.js';
-import { TodoView } from '../js/view/todoView.js';
-import { TodoController } from '../js/controllers/todoController.js';
+
+import { TodoStore } from '../store/todoStore.js';
+import { UIStore } from '../store/uiStore.js';
+import { NotificationService } from '../services/notificationService.js';
+import { TodoView } from '../view/todoView.js';
+import { TodoController } from '../controllers/todoController.js';
 
 export function initApp() {
-    console.log("Inicjalizacja aplikacji Enterprise PWA...");
+    console.log("Inicjalizacja Systemu...");
     
-    const store = new TodoStore();
+    const todoStore = new TodoStore();
+    const uiStore = new UIStore();
+    const notificationService = new NotificationService();
+    
     const view = new TodoView();
-    new TodoController(store, view);
 
-    // Service Worker osobno
+    new TodoController(todoStore, uiStore, notificationService, view);
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
