@@ -17,13 +17,18 @@ export class TodoStore {
         }
     }
 
-    _save() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tasks));
-        } catch (e) {
-            throw new Error("Brak miejsca w pamięci przeglądarki!");
+   _save() {
+    try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.todos));
+    } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+            throw new Error("Pamięć pełna! Nie można zapisać zdjęcia. Usuń stare zadania.");
+        } else {
+            throw new Error("Błąd zapisu danych.");
         }
     }
+    
+}
 
     // --- API ---
 
