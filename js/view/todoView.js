@@ -4,6 +4,8 @@ import { ModalManager } from './components/modalManager.js';
 
 export class TodoView {
     constructor() {
+        console.log("🔧 [VIEW] Inicjalizacja widoku...");
+
         // Główny kontener
         this.list = document.getElementById('todo-list');
         
@@ -11,7 +13,7 @@ export class TodoView {
         this.form = document.getElementById('todo-form');
         this.input = document.getElementById('todo-input');
         this.dateInput = document.getElementById('todo-date');
-        this.fileInput = document.getElementById('todo-image');
+        this.fileInput = document.getElementById('todo-image'); // Upewnij się, że ID w HTML to 'todo-image' lub 'todo-file'
         
         // Inne
         this.stats = document.getElementById('stats-counter');
@@ -19,6 +21,18 @@ export class TodoView {
         this.notifyBtn = document.getElementById('notify-btn');
         this.filters = document.querySelectorAll('.filter-btn');
         this.sortToggle = document.getElementById('sort-toggle');
+
+        // --- LOGOWANIE STANU ELEMENTÓW ---
+        console.log("   -> Formularz (this.form):", this.form);
+        console.log("   -> Input tekstowy (this.input):", this.input);
+        console.log("   -> Lista (this.list):", this.list);
+        
+        if (!this.form || !this.input || !this.list) {
+            console.error("❌ [VIEW ERROR] Brakuje kluczowych elementów w HTML! Sprawdź ID.");
+        } else {
+            console.log("✅ [VIEW] Wszystkie elementy znalezione.");
+        }
+        // ---------------------------------
 
         // Komponenty
         this.toastManager = new ToastManager('toast-container');
@@ -28,6 +42,7 @@ export class TodoView {
     // --- DELEGACJA DO KOMPONENTÓW ---
 
     render(tasks) {
+        // console.log("🎨 [VIEW] Renderowanie zadań:", tasks.length);
         this.list.innerHTML = '';
         if (tasks.length === 0) {
             this._renderEmpty();
@@ -36,7 +51,6 @@ export class TodoView {
         
         const fragment = document.createDocumentFragment();
         tasks.forEach(task => {
-            // View używa TodoItem buildera, zamiast robić to samemu
             fragment.appendChild(TodoItem.create(task));
         });
         this.list.appendChild(fragment);
@@ -58,20 +72,35 @@ export class TodoView {
         this.modalManager.bindConfirm(handler);
     }
 
-    // --- BINDING (Reszta bez zmian, bo to rola View) ---
+    // --- BINDING ---
 
     bindAdd(handler) {
+        if (!this.form) return; // Zabezpieczenie przed błędem, jeśli form nie istnieje
+
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            handler({
-                text: this.input.value.trim(),
-                date: this.dateInput.value,
-                file: this.fileInput.files[0]
-            });
+            console.log("🖱️ [VIEW] Wykryto submit formularza!");
+            
+            const textVal = this.input.value.trim();
+            console.log("   -> Wartość inputa:", textVal);
+
+            if (textVal) {
+                const payload = {
+                    text: textVal,
+                    date: this.dateInput ? this.dateInput.value : null,
+                    file: this.fileInput && this.fileInput.files ? this.fileInput.files[0] : null
+                };
+                console.log("📤 [VIEW] Przekazuję dane do Controllera:", payload);
+                handler(payload);
+            } else {
+                console.warn("⚠️ [VIEW] Pusty input - blokuję wysyłkę.");
+            }
         });
     }
 
     bindListAction(handler) {
+        if (!this.list) return;
+
         this.list.addEventListener('click', (e) => {
             const item = e.target.closest('.todo-item');
             if (!item) return;
@@ -81,6 +110,8 @@ export class TodoView {
                            e.target.closest('.edit-btn') ? 'edit' :
                            e.target.closest('.calendar-btn') ? 'calendar' :
                            'toggle';
+            
+            console.log(`🖱️ [VIEW] Akcja na liście: ${action}, ID: ${id}`);
             handler(action, id);
         });
     }
@@ -110,7 +141,7 @@ export class TodoView {
     // --- UI UPDATES ---
 
     updateStats({ total, completed }) {
-        this.stats.textContent = `${total} zadania • ${completed} ukończone`;
+        if(this.stats) this.stats.textContent = `${total} zadania • ${completed} ukończone`;
         if (this.clearBtn) {
             this.clearBtn.classList.toggle('hidden', completed === 0);
         }
