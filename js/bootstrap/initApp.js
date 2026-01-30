@@ -1,6 +1,6 @@
-import { TodoStore } from '../store/todoStore.js';
-import { TodoView } from '../view/todoView.js';
-import { TodoController } from '../controllers/todoController.js';
+import { TodoStore } from '../js/store/todoStore.js';
+import { TodoView } from '../js/view/todoView.js';
+import { TodoController } from '../js/controllers/todoController.js';
 
 export function initApp() {
     console.log("Inicjalizacja aplikacji Enterprise PWA...");
