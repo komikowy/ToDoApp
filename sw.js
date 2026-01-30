@@ -6,7 +6,7 @@ const ASSETS_TO_CACHE = [
     '../style.css',
     '../manifest.json',
     '../js/app.js',
-    '../js/helpers.js',
+    './js/utils/helpers.js',
 
     // Bootstrap
     '../js/bootstrap/initApp.js',
