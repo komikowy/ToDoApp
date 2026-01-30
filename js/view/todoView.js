@@ -6,6 +6,9 @@ export class TodoView {
     constructor() {
         console.log("🔧 [VIEW] Inicjalizacja widoku...");
 
+        // Placeholder na serwis do ładowania zdjęć (wstrzykiwany później)
+        this.imageLoader = null; 
+
         // Główny kontener
         this.list = document.getElementById('todo-list');
         
@@ -13,7 +16,7 @@ export class TodoView {
         this.form = document.getElementById('todo-form');
         this.input = document.getElementById('todo-input');
         this.dateInput = document.getElementById('todo-date');
-        this.fileInput = document.getElementById('todo-image'); // Upewnij się, że ID w HTML to 'todo-image' lub 'todo-file'
+        this.fileInput = document.getElementById('todo-image'); 
         
         // Inne
         this.stats = document.getElementById('stats-counter');
@@ -35,6 +38,13 @@ export class TodoView {
         this.modalManager = new ModalManager('confirm-dialog', 'dialog-confirm', 'dialog-cancel');
     }
 
+    // --- METODA WSTRZYKIWANIA ZALEŻNOŚCI ---
+    
+    // Tę metodę wywołuje Kontroler zaraz po stworzeniu Widoku
+    setImageLoader(loader) {
+        this.imageLoader = loader;
+    }
+
     // --- DELEGACJA DO KOMPONENTÓW ---
 
     render(tasks) {
@@ -47,7 +57,8 @@ export class TodoView {
         
         const fragment = document.createDocumentFragment();
         tasks.forEach(task => {
-            fragment.appendChild(TodoItem.create(task));
+            // WAŻNE: Przekazujemy imageLoader do komponentu TodoItem!
+            fragment.appendChild(TodoItem.create(task, this.imageLoader));
         });
         this.list.appendChild(fragment);
     }
@@ -75,7 +86,7 @@ export class TodoView {
 
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            console.log("🖱️ [VIEW] Wykryto submit formularza!");
+            // console.log("🖱️ [VIEW] Wykryto submit formularza!");
             
             const textVal = this.input.value.trim();
             console.log("   -> Wartość inputa:", textVal);
@@ -86,7 +97,7 @@ export class TodoView {
                     date: this.dateInput ? this.dateInput.value : null,
                     file: this.fileInput && this.fileInput.files ? this.fileInput.files[0] : null
                 };
-                console.log("📤 [VIEW] Przekazuję dane do Controllera:", payload);
+                // console.log("📤 [VIEW] Przekazuję dane do Controllera:", payload);
                 handler(payload);
             } else {
                 console.warn("⚠️ [VIEW] Pusty input - blokuję wysyłkę.");
@@ -101,7 +112,7 @@ export class TodoView {
             const item = e.target.closest('.todo-item');
             if (!item) return;
             
-            // ⚠️ POPRAWKA: ID jest teraz Stringiem (UUID), więc usuwamy Number()
+            // ID jest teraz UUID (String), więc nie rzutujemy na Number
             const id = item.dataset.id; 
             
             const action = e.target.closest('.delete-btn') ? 'delete' :
@@ -159,7 +170,6 @@ export class TodoView {
 
     resetForm() {
         this.form.reset();
-        // Resetujemy też input pliku, jeśli istnieje, aby można było dodać ten sam plik ponownie
         if (this.fileInput) this.fileInput.value = '';
     }
 

@@ -1,12 +1,18 @@
+import { createTodo } from '../domain/todoRules.js';
 import * as Helpers from '../utils/helpers.js';
 
 export class TodoController {
-    constructor(todoStore, uiStore, notificationService, view) {
+    // WAŻNE: Dodano imageStore do konstruktora
+    constructor(todoStore, uiStore, imageStore, notificationService, view) {
         // Wstrzykiwanie zależności (Dependency Injection)
         this.todoStore = todoStore;
         this.uiStore = uiStore;
+        this.imageStore = imageStore; // <--- NOWOŚĆ: Baza zdjęć
         this.notificationService = notificationService;
         this.view = view;
+
+        // Przekazujemy loader obrazków do widoku (dla TodoItem)
+        this.view.setImageLoader(this.imageStore);
 
         // Bindowanie widoku
         this.view.bindAdd(this.handleAdd);
@@ -15,6 +21,8 @@ export class TodoController {
         this.view.bindSortChange(this.handleSort);
         this.view.bindClearCompleted(this.handleClear);
         this.view.bindNotificationToggle(this.handleNotify);
+        
+        // Modal potwierdzenia usuwania
         this.view.bindDialogConfirm(this.handleConfirmDelete);
 
         // Start
@@ -25,59 +33,79 @@ export class TodoController {
     // --- METODY POMOCNICZE ---
 
     _refresh() {
-        // 1. Pobierz stan UI
         const filter = this.uiStore.getFilter();
-        const sort = this.uiStore.getSort();
+        const sort = this.uiStore.getSort(); // true/false
 
-        // 2. Pobierz dane biznesowe wg kryteriów UI
-        const tasks = this.todoStore.getFiltered(filter, sort);
+        // Pobieramy wszystkie zadania
+        let tasks = this.todoStore.getAll();
 
-        // 3. Wyświetl
+        // 1. Filtrowanie
+        if (filter === 'active') tasks = tasks.filter(t => !t.isCompleted);
+        else if (filter === 'completed') tasks = tasks.filter(t => t.isCompleted);
+
+        // 2. Sortowanie (alfabetyczne)
+        if (sort) {
+            tasks.sort((a, b) => a.text.localeCompare(b.text));
+        }
+
+        // 3. Renderowanie
         this.view.render(tasks);
-        this.view.updateStats(this.todoStore.getStats());
+        
+        // 4. Statystyki
+        const allStats = this.todoStore.getAll();
+        this.view.updateStats({
+            total: allStats.length,
+            completed: allStats.filter(t => t.isCompleted).length
+        });
+        
+        // 5. Ustawienie aktywnego filtra w UI
+        this.view.setActiveFilter(filter);
+        this.view.setSortToggle(sort);
     }
 
     _updateNotifyIcon() {
-        const granted = this.notificationService.hasPermission();
-        this.view.updateNotifyIcon(granted);
+        if (this.notificationService.isSupported()) {
+            const granted = this.notificationService.hasPermission();
+            this.view.updateNotifyIcon(granted);
+        }
     }
 
     // --- HANDLERY ZDARZEŃ ---
 
+    // Nowoczesny handler dodawania (IndexedDB)
     handleAdd = async ({ text, date, file }) => {
         try {
-            let imageBase64 = null;
+            let imageId = null;
+
+            // 1. Jeśli jest plik, zapisz go w IndexedDB i weź ID
             if (file) {
-                this.view.showToast("Przetwarzanie zdjęcia...", "info");
-                imageBase64 = await Helpers.fileToBase64(file);
+                this.view.showToast("Zapisywanie zdjęcia...", "info");
+                imageId = await this.imageStore.saveImage(file);
             }
 
-            // 1. Logika Biznesowa (Store)
-            const newTask = this.todoStore.add({ text, image: imageBase64, dueDate: date });
+            // 2. Logika Biznesowa (Store) - tworzymy zadanie z ID obrazka
+            const newTask = createTodo(text, date, imageId);
+            this.todoStore.add(newTask);
             
-            // 2. Logika Powiadomień (Service)
+            // 3. Logika Powiadomień (Service)
             this.notificationService.schedule(newTask);
             
-            // 3. Logika UI (View/Toast)
-            const currentFilter = this.uiStore.getFilter();
-            if (currentFilter === 'completed') {
-                this.view.showToast("Dodano (widoczne w 'Do zrobienia')", "success");
-            } else {
-                this.view.showToast("Dodano zadanie!", "success");
-            }
-            
+            // 4. Feedback UI
+            this.view.showToast("Zadanie dodane!", "success");
             this.view.resetForm();
             this._refresh();
 
         } catch (error) {
-            this.view.showToast(error.message, "error");
+            console.error(error);
+            this.view.showToast("Błąd: " + error.message, "error");
         }
     };
 
     handleListAction = (action, id) => {
+        // ID jest teraz stringiem (UUID), więc nie rzutujemy na Number
         switch (action) {
             case 'delete':
-                this.uiStore.setTaskToDelete(id); // Zapisujemy stan w UIStore
+                this.uiStore.setTaskToDelete(id); // Zapisujemy, co chcemy usunąć
                 this.view.showDialog();
                 break;
 
@@ -88,35 +116,53 @@ export class TodoController {
 
             case 'edit':
                 const task = this.todoStore.getAll().find(t => t.id === id);
-                const newText = prompt("Edytuj:", task.text); // Tu można by dodać modal service
-                if (newText && newText.trim() !== task.text) {
-                    try {
+                if (task) {
+                    const newText = prompt("Edytuj treść:", task.text);
+                    if (newText && newText.trim() !== task.text) {
                         this.todoStore.updateText(id, newText.trim());
                         this.view.showToast("Zaktualizowano", "success");
                         this._refresh();
-                    } catch(e) {
-                        this.view.showToast(e.message, "error");
                     }
                 }
                 break;
 
             case 'calendar':
+                // Opcjonalnie: pobieranie ICS
                 const t = this.todoStore.getAll().find(item => item.id === id);
-                Helpers.downloadICS(t);
-                this.view.showToast("Pobrano ICS", "info");
+                if (t && Helpers.downloadICS) {
+                    Helpers.downloadICS(t);
+                    this.view.showToast("Pobrano plik kalendarza", "info");
+                } else {
+                    this.view.showToast("Funkcja kalendarza niedostępna", "error");
+                }
                 break;
         }
     };
 
-    handleConfirmDelete = () => {
-        const id = this.uiStore.getTaskToDelete(); // Pobieramy ID z UIStore
-        if (id) {
-            this.todoStore.remove(id);
-            this.uiStore.clearTaskToDelete();
+    handleConfirmDelete = async () => {
+        const id = this.uiStore.getTaskToDelete();
+        if (!id) return;
+
+        try {
+            // 1. Znajdź zadanie, żeby sprawdzić czy ma obrazek
+            const task = this.todoStore.getAll().find(t => t.id === id);
             
-            this.view.showToast("Usunięto", "info");
+            // 2. Jeśli ma obrazek -> usuń go z IndexedDB
+            if (task && task.file) {
+                await this.imageStore.deleteImage(task.file);
+            }
+
+            // 3. Usuń zadanie z LocalStorage
+            this.todoStore.remove(id);
+            
+            // 4. Sprzątanie UI
+            this.uiStore.clearTaskToDelete();
+            this.view.showToast("Usunięto zadanie", "info");
             this.view.closeDialog();
             this._refresh();
+        } catch (e) {
+            console.error(e);
+            this.view.showToast("Błąd podczas usuwania", "error");
         }
     };
 
@@ -130,15 +176,37 @@ export class TodoController {
         this._refresh();
     };
 
-    handleClear = () => {
-        if (confirm("Usunąć ukończone?")) {
-            this.todoStore.removeCompleted();
-            this.view.showToast("Wyczyszczono", "success");
-            this._refresh();
+    handleClear = async () => {
+        if (confirm("Usunąć wszystkie ukończone zadania?")) {
+            try {
+                // 1. Znajdź wszystkie ukończone zadania
+                const completedTasks = this.todoStore.getAll().filter(t => t.isCompleted);
+                
+                // 2. Usuń ich obrazki z IndexedDB (równolegle)
+                const imageDeletionPromises = completedTasks
+                    .filter(t => t.file)
+                    .map(t => this.imageStore.deleteImage(t.file));
+                
+                await Promise.all(imageDeletionPromises);
+
+                // 3. Wyczyść LocalStorage
+                this.todoStore.clearCompleted(); // Zakładam, że masz metodę clearCompleted lub removeCompleted
+                
+                this.view.showToast("Wyczyszczono ukończone", "success");
+                this._refresh();
+            } catch (e) {
+                console.error(e);
+                this.view.showToast("Błąd czyszczenia danych", "error");
+            }
         }
     };
 
     handleNotify = async () => {
+        if (!this.notificationService.isSupported()) {
+            this.view.showToast("Powiadomienia nie są wspierane", "error");
+            return;
+        }
+
         try {
             if (this.notificationService.hasPermission()) {
                 this.view.showToast("Powiadomienia są już aktywne ✅", "info");
@@ -154,7 +222,7 @@ export class TodoController {
                 this.view.showToast("Brak zgody na powiadomienia", "info");
             }
         } catch (e) {
-            this.view.showToast(e.message, "error");
+            this.view.showToast("Błąd uprawnień: " + e.message, "error");
         }
     };
 }
