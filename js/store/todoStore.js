@@ -1,4 +1,4 @@
-import { createTodo } from '../js/domain/todoRules.js';
+import { createTodo } from '../domain/todoRules.js';
 
 const STORAGE_KEY = 'pro_todo_v3';
 

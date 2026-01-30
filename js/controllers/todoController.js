@@ -1,5 +1,4 @@
 import * as Helpers from '../utils/helpers.js';
-import { Router } from '../utils/router.js';
 
 export class TodoController {
     constructor(todoStore, uiStore, notificationService, view) {
@@ -18,47 +17,12 @@ export class TodoController {
         this.view.bindNotificationToggle(this.handleNotify);
         this.view.bindDialogConfirm(this.handleConfirmDelete);
 
-        // Router (hash-based)
-        this.router = new Router({
-            '/': () => this._applyRoute({ filter: 'all' }),
-            '/filter/:filter': (params, query) => this._applyRoute({ filter: params.filter, sort: query.sort }),
-            '/task/:id': (params) => this._openTask(Number(params.id))
-        }, { mode: 'hash' });
-        this.router.start();
-
-        // Start (will be synced by router on load)
+        // Start
+        this._refresh();
         this._updateNotifyIcon();
     }
 
     // --- METODY POMOCNICZE ---
-
-    _applyRoute = ({ filter = 'all', sort } = {}) => {
-        // Apply filter from route
-        if (filter) {
-            this.uiStore.setFilter(filter);
-            this.view.setActiveFilter(filter);
-        }
-
-        // Apply sort from query (if provided)
-        if (typeof sort !== 'undefined') {
-            const isSorted = (sort === '1' || sort === 'true');
-            this.uiStore.setSort(isSorted);
-            this.view.setSortToggle(isSorted);
-        } else {
-            // ensure UI reflects current store
-            this.view.setSortToggle(this.uiStore.getSort());
-        }
-
-        this._refresh();
-    };
-
-    _openTask = (id) => {
-        const task = this.todoStore.getAll().find(t => t.id === id);
-        if (task) {
-            // TODO: replace with modal in the future; lightweight handler for deep link
-            alert(`Zadanie: ${task.text}`);
-        }
-    };
 
     _refresh() {
         // 1. Pobierz stan UI
@@ -157,16 +121,12 @@ export class TodoController {
     };
 
     handleFilter = (filter) => {
-        // Update URL & state (router will re-apply the route)
-        const sort = this.uiStore.getSort() ? 1 : 0;
-        this.router.navigateTo(`/filter/${filter}`, { sort });
+        this.uiStore.setFilter(filter);
+        this._refresh();
     };
 
     handleSort = (isSorted) => {
         this.uiStore.setSort(isSorted);
-        // Update current route query param so URL reflects sort
-        const filter = this.uiStore.getFilter() || 'all';
-        this.router.navigateTo(`/filter/${filter}`, { sort: isSorted ? 1 : 0 });
         this._refresh();
     };
 
