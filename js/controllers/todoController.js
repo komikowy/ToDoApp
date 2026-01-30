@@ -1,4 +1,4 @@
-import * as Helpers from '../helpers.js';
+import * as Helpers from '../js/utils/helpers.js';
 
 export class TodoController {
     constructor(todoStore, uiStore, notificationService, view) {
