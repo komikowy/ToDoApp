@@ -1,9 +1,9 @@
 
-import { TodoStore } from '../store/todoStore.js';
-import { UIStore } from '../store/uiStore.js';
-import { NotificationService } from '../services/notificationService.js';
-import { TodoView } from '../view/todoView.js';
-import { TodoController } from '../controllers/todoController.js';
+import { TodoStore } from '../../store/todoStore.js';
+import { UIStore } from '../../store/uiStore.js';
+import { NotificationService } from '../../services/notificationService.js';
+import { TodoView } from '../../view/todoView.js';
+import { TodoController } from '../../controllers/todoController.js';
 
 export function initApp() {
     console.log("Inicjalizacja Systemu...");
