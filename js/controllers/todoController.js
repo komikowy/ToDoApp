@@ -7,7 +7,7 @@ export class TodoController {
         // Wstrzykiwanie zależności (Dependency Injection)
         this.todoStore = todoStore;
         this.uiStore = uiStore;
-        this.imageStore = imageStore; // <--- NOWOŚĆ: Baza zdjęć
+        this.imageStore = imageStore; // <--- Baza zdjęć (IndexedDB)
         this.notificationService = notificationService;
         this.view = view;
 
@@ -72,7 +72,7 @@ export class TodoController {
 
     // --- HANDLERY ZDARZEŃ ---
 
-    // Nowoczesny handler dodawania (IndexedDB)
+    // Nowoczesny handler dodawania (IndexedDB + UUID)
     handleAdd = async ({ text, date, file }) => {
         try {
             let imageId = null;
@@ -83,8 +83,11 @@ export class TodoController {
                 imageId = await this.imageStore.saveImage(file);
             }
 
-            // 2. Logika Biznesowa (Store) - tworzymy zadanie z ID obrazka
-            const newTask = createTodo(text, date, imageId);
+            // 2. Logika Biznesowa (Store)
+            // ⚠️ FIX: Zamieniamy pusty string "" na null, żeby nie psuć daty
+            const cleanDate = date ? date : null;
+
+            const newTask = createTodo(text, cleanDate, imageId);
             this.todoStore.add(newTask);
             
             // 3. Logika Powiadomień (Service)
@@ -127,13 +130,19 @@ export class TodoController {
                 break;
 
             case 'calendar':
-                // Opcjonalnie: pobieranie ICS
                 const t = this.todoStore.getAll().find(item => item.id === id);
-                if (t && Helpers.downloadICS) {
+                
+                if (!t) {
+                    this.view.showToast("Nie znaleziono zadania", "error");
+                    return;
+                }
+
+                // Sprawdzamy datę PRZED wywołaniem helpera
+                if (t.dueDate) {
                     Helpers.downloadICS(t);
-                    this.view.showToast("Pobrano plik kalendarza", "info");
+                    this.view.showToast("Pobrano plik kalendarza 📅", "success");
                 } else {
-                    this.view.showToast("Funkcja kalendarza niedostępna", "error");
+                    this.view.showToast("Ustaw datę, aby dodać do kalendarza!", "info");
                 }
                 break;
         }
@@ -190,7 +199,7 @@ export class TodoController {
                 await Promise.all(imageDeletionPromises);
 
                 // 3. Wyczyść LocalStorage
-                this.todoStore.clearCompleted(); // Zakładam, że masz metodę clearCompleted lub removeCompleted
+                this.todoStore.clearCompleted();
                 
                 this.view.showToast("Wyczyszczono ukończone", "success");
                 this._refresh();
