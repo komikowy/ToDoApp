@@ -1,4 +1,4 @@
-import { TodoStore } from './js/store/uiStore.js';
+import { TodoStore } from '../js/store/uiStore.js';
 import { UIStore } from '../js/store/uiStore.js';
 import { NotificationService } from '../js/services/notificationService.js';
 import { TodoView } from '../js/view/todoView.js';
