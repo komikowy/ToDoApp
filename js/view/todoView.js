@@ -1,6 +1,6 @@
-import { TodoItem } from './components/TodoItem.js';
-import { ToastManager } from './components/ToastManager.js';
-import { ModalManager } from './components/ModalManager.js';
+import { TodoItem } from '../components/todoItem.js';
+import { ToastManager } from '../components/toastManager.js';
+import { ModalManager } from '../components/modalManager.js';
 
 export class TodoView {
     constructor() {

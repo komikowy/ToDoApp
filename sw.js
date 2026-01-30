@@ -15,18 +15,17 @@ const ASSETS_TO_CACHE = [
     './js/domain/todoRules.js',
 
     // Services & Stores (Logika i Dane)
-    './js/services/NotificationService.js',
-    './js/store/TodoStore.js',
-    './js/store/UIStore.js',
+    './js/services/notificationService.js',
+    './js/store/todoStore.js',
+    './js/store/uiStore.js',
 
     // Controllers (Orkiestracja)
-    './js/controllers/TodoController.js',
-
+    './js/controllers/todoController.js',
     // View & Components (Widok)
-    './js/view/TodoView.js',
-    './js/view/components/TodoItem.js',
-    './js/view/components/ToastManager.js',
-    './js/view/components/ModalManager.js',
+    './js/view/todoView.js',
+    './js/view/components/todoItem.js',
+    './js/view/components/toastManager.js',
+    './js/view/components/modalManager.js',
 
     // Ikony
     './icons/icon-192.png',
