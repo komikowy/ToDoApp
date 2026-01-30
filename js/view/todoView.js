@@ -120,6 +120,14 @@ export class TodoView {
         if(this.notifyBtn) this.notifyBtn.textContent = granted ? '🔔' : '🔕';
     }
 
+    setActiveFilter(filter) {
+        this.filters.forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+    }
+
+    setSortToggle(isSorted) {
+        if(this.sortToggle) this.sortToggle.checked = !!isSorted;
+    }
+
     resetForm() {
         this.form.reset();
     }
