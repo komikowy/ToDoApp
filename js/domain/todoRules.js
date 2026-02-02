@@ -6,19 +6,20 @@ export function validateText(text) {
     return true;
 }
 
-export function createTodo(text, date = null, file = null) {
-    if (!text || typeof text !== 'string') {
-        throw new Error("Validation Error: Task text is required and must be a string.");
-    }
-
+/**
+ * Tworzy kompletny obiekt zadania.
+ * Zastąpiono Date.now() bezpiecznym UUID.
+ */
+export function createTodo(text, date = null, fileId = null) {
+    validateText(text);
+    
     return {
-        id: self.crypto && self.crypto.randomUUID 
-            ? self.crypto.randomUUID() 
-            : 'id-' + Date.now().toString(36) + Math.random().toString(36).substr(2),
+        // Generujemy unikalny identyfikator zgodny ze standardem RFC 4122
+        id: crypto.randomUUID(), 
         text: text.trim(),
-        isCompleted: false,
-        createdAt: new Date().toISOString(),
-        dueDate: date || null,
-        file: file || null
+        isCompleted: false, // Używamy nowej nazwy pola dla jasności
+        createdAt: new Date().toISOString(), // Standard ISO jest lepszy do sortowania
+        dueDate: date,
+        file: fileId // Referencja do ID w IndexedDB
     };
 }

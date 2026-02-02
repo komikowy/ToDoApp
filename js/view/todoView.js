@@ -1,182 +1,163 @@
-import { TodoItem } from './components/todoItem.js';
-import { ToastManager } from './components/toastManager.js';
-import { ModalManager } from './components/modalManager.js';
+import { TodoItem } from './components/TodoItem.js';
+import { ToastManager } from './components/ToastManager.js';
+import { ModalManager } from './components/ModalManager.js';
 
 export class TodoView {
     constructor() {
-        console.log("🔧 [VIEW] Inicjalizacja widoku...");
-
-        // Placeholder na serwis do ładowania zdjęć (wstrzykiwany później)
-        this.imageLoader = null; 
-
-        // Główny kontener
+        this.imageLoader = null;
         this.list = document.getElementById('todo-list');
-        
-        // Formularz
         this.form = document.getElementById('todo-form');
         this.input = document.getElementById('todo-input');
         this.dateInput = document.getElementById('todo-date');
-        this.fileInput = document.getElementById('todo-image'); 
+        this.fileInput = document.getElementById('todo-image');
         
-        // Inne
+        // Elementy UI statystyk i filtrów
         this.stats = document.getElementById('stats-counter');
         this.clearBtn = document.getElementById('clear-completed');
         this.notifyBtn = document.getElementById('notify-btn');
         this.filters = document.querySelectorAll('.filter-btn');
         this.sortToggle = document.getElementById('sort-toggle');
 
-        // --- WALIDACJA STRUKTURY HTML ---
-        if (!this.form || !this.input || !this.list) {
-            console.error("❌ [VIEW ERROR] Brakuje kluczowych elementów w HTML! Sprawdź ID.");
-        } else {
-            console.log("✅ [VIEW] Wszystkie elementy znalezione.");
-        }
-        // ---------------------------------
-
-        // Komponenty
+        // Inicjalizacja menedżerów pomocniczych
         this.toastManager = new ToastManager('toast-container');
         this.modalManager = new ModalManager('confirm-dialog', 'dialog-confirm', 'dialog-cancel');
     }
 
-    // --- METODA WSTRZYKIWANIA ZALEŻNOŚCI ---
-    
-    // Tę metodę wywołuje Kontroler zaraz po stworzeniu Widoku
     setImageLoader(loader) {
         this.imageLoader = loader;
     }
 
-    // --- DELEGACJA DO KOMPONENTÓW ---
-
+    /**
+     * Inteligentne renderowanie listy zadań.
+     * Realizuje cele: Wydajność (Fragmenty) i Pamięć (Revoke).
+     */
     render(tasks) {
-        // console.log("🎨 [VIEW] Renderowanie zadań:", tasks.length);
-        this.list.innerHTML = '';
+        // 1. PAMIĘĆ: Zwolnienie starych adresów Blob URL przed usunięciem widoku
+        // Zapobiega wyciekom pamięci RAM przy częstym odświeżaniu listy ze zdjęciami
+        const oldImages = this.list.querySelectorAll('img.img-preview');
+        oldImages.forEach(img => {
+            if (img.src.startsWith('blob:')) {
+                URL.revokeObjectURL(img.src);
+            }
+        });
+
+        // 2. WYDAJNOŚĆ: Obsługa pustego stanu bez innerHTML
         if (tasks.length === 0) {
-            this._renderEmpty();
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.textContent = '🎉 Brak zadań!';
+            this.list.replaceChildren(emptyState);
             return;
         }
         
+        // 3. WYDAJNOŚĆ: Budowanie DOM w pamięci (DocumentFragment)
+        // Minimalizuje reflow (przeliczanie układu strony)
         const fragment = document.createDocumentFragment();
         tasks.forEach(task => {
-            // WAŻNE: Przekazujemy imageLoader do komponentu TodoItem!
             fragment.appendChild(TodoItem.create(task, this.imageLoader));
         });
-        this.list.appendChild(fragment);
+
+        // 4. WYDAJNOŚĆ: Jedna operacja na żywym DOM zamiast wielu
+        // replaceChildren jest najszybszą natywną metodą aktualizacji
+        this.list.replaceChildren(fragment);
     }
 
-    showToast(msg, type) {
-        this.toastManager.show(msg, type);
-    }
-
-    showDialog() {
-        this.modalManager.open();
-    }
-
-    closeDialog() {
-        this.modalManager.close();
-    }
-
-    bindDialogConfirm(handler) {
-        this.modalManager.bindConfirm(handler);
-    }
-
-    // --- BINDING ---
+    // --- BINDING (Obsługa zdarzeń) ---
 
     bindAdd(handler) {
-        if (!this.form) return;
-
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            // console.log("🖱️ [VIEW] Wykryto submit formularza!");
-            
-            const textVal = this.input.value.trim();
-            console.log("   -> Wartość inputa:", textVal);
-
-            if (textVal) {
-                const payload = {
-                    text: textVal,
-                    date: this.dateInput ? this.dateInput.value : null,
-                    file: this.fileInput && this.fileInput.files ? this.fileInput.files[0] : null
-                };
-                // console.log("📤 [VIEW] Przekazuję dane do Controllera:", payload);
-                handler(payload);
-            } else {
-                console.warn("⚠️ [VIEW] Pusty input - blokuję wysyłkę.");
-            }
-        });
-    }
-
-    bindListAction(handler) {
-        if (!this.list) return;
-
-        this.list.addEventListener('click', (e) => {
-            const item = e.target.closest('.todo-item');
-            if (!item) return;
-            
-            // ID jest teraz UUID (String), więc nie rzutujemy na Number
-            const id = item.dataset.id; 
-            
-            const action = e.target.closest('.delete-btn') ? 'delete' :
-                           e.target.closest('.edit-btn') ? 'edit' :
-                           e.target.closest('.calendar-btn') ? 'calendar' :
-                           'toggle';
-            
-            // console.log(`🖱️ [VIEW] Akcja: ${action}, ID: ${id}`);
-            handler(action, id);
-        });
-    }
-
-    bindFilterChange(handler) {
-        this.filters.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.filters.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                handler(e.target.dataset.filter);
+            handler({
+                text: this.input.value.trim(),
+                date: this.dateInput.value,
+                file: this.fileInput.files[0]
             });
         });
     }
 
-    bindSortChange(handler) {
-        if(this.sortToggle) this.sortToggle.addEventListener('change', e => handler(e.target.checked));
+    bindListAction(handler) {
+        this.list.addEventListener('click', (e) => {
+            const item = e.target.closest('.todo-item');
+            if (!item) return;
+            const id = item.dataset.id; // UUID
+            
+            // Delegacja zdarzeń w zależności od klikniętego elementu
+            if (e.target.closest('.delete-btn')) handler('delete', id);
+            else if (e.target.closest('.edit-btn')) handler('edit', id);
+            else if (e.target.closest('.calendar-btn')) handler('calendar', id);
+            else if (e.target.closest('.img-preview')) return; // Kliknięcie w obrazek obsługuje TodoItem
+            else handler('toggle', id);
+        });
+    }
+    
+    // --- METODY POMOCNICZE I UI ---
+
+    showToast(msg, type) { 
+        this.toastManager.show(msg, type); 
     }
 
-    bindClearCompleted(handler) {
-        if(this.clearBtn) this.clearBtn.addEventListener('click', handler);
+    showDialog() { 
+        this.modalManager.open(); 
     }
 
-    bindNotificationToggle(handler) {
-        if(this.notifyBtn) this.notifyBtn.addEventListener('click', handler);
+    closeDialog() { 
+        this.modalManager.close(); 
     }
 
-    // --- UI UPDATES ---
+    bindDialogConfirm(h) { 
+        this.modalManager.bindConfirm(h); 
+    }
 
-    updateStats({ total, completed }) {
-        if(this.stats) this.stats.textContent = `${total} zadania • ${completed} ukończone`;
-        if (this.clearBtn) {
+    bindFilterChange(h) { 
+        this.filters.forEach(b => b.addEventListener('click', e => { 
+            this.filters.forEach(x => x.classList.remove('active')); 
+            e.target.classList.add('active'); 
+            h(e.target.dataset.filter); 
+        })); 
+    }
+
+    bindSortChange(h) { 
+        if(this.sortToggle) {
+            this.sortToggle.addEventListener('change', e => h(e.target.checked));
+        }
+    }
+
+    bindClearCompleted(h) { 
+        if(this.clearBtn) {
+            this.clearBtn.addEventListener('click', h); 
+        }
+    }
+
+    bindNotificationToggle(h) { 
+        if(this.notifyBtn) {
+            this.notifyBtn.addEventListener('click', h); 
+        }
+    }
+    
+    updateStats({total, completed}) {
+        this.stats.textContent = `${total} zadania • ${completed} ukończone`;
+        if(this.clearBtn) {
             this.clearBtn.classList.toggle('hidden', completed === 0);
         }
     }
 
-    updateNotifyIcon(granted) {
-        if(this.notifyBtn) this.notifyBtn.textContent = granted ? '🔔' : '🔕';
+    updateNotifyIcon(active) { 
+        if(this.notifyBtn) {
+            this.notifyBtn.textContent = active ? '🔔' : '🔕'; 
+        }
     }
 
-    setActiveFilter(filter) {
-        this.filters.forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+    setActiveFilter(f) { 
+        this.filters.forEach(b => b.classList.toggle('active', b.dataset.filter === f)); 
     }
 
-    setSortToggle(isSorted) {
-        if(this.sortToggle) this.sortToggle.checked = !!isSorted;
+    setSortToggle(s) { 
+        if(this.sortToggle) {
+            this.sortToggle.checked = s; 
+        }
     }
 
-    resetForm() {
-        this.form.reset();
-        if (this.fileInput) this.fileInput.value = '';
-    }
-
-    _renderEmpty() {
-        const div = document.createElement('div');
-        div.className = 'empty-state';
-        div.textContent = '🎉 Brak zadań! Odpocznij.';
-        this.list.appendChild(div);
+    resetForm() { 
+        this.form.reset(); 
     }
 }

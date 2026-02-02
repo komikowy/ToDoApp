@@ -1,6 +1,4 @@
-import { createTodo } from '../domain/todoRules.js';
-
-const STORAGE_KEY = 'pro_todo_v3';
+const STORAGE_KEY = 'todo_app_pro_v4'; // Nowa wersja klucza
 
 export class TodoStore {
     constructor() {
@@ -9,52 +7,24 @@ export class TodoStore {
 
     _load() {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            return stored ? JSON.parse(stored) : [];
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
         } catch (e) {
-            console.error("Store Load Error", e);
+            console.error("Błąd ładowania danych", e);
             return [];
         }
     }
 
-   _save() {
-    try {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.todos));
-    } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-            throw new Error("Pamięć pełna! Nie można zapisać zdjęcia. Usuń stare zadania.");
-        } else {
-            throw new Error("Błąd zapisu danych.");
-        }
+    _save() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tasks));
     }
-    
-}
 
     // --- API ---
+    getAll() { return [...this.tasks]; }
 
-    getAll() {
-        return [...this.tasks];
-    }
-
-    getFiltered(filterMode, sortMode) {
-        let result = [...this.tasks];
-
-        if (filterMode === 'active') result = result.filter(t => !t.done);
-        if (filterMode === 'completed') result = result.filter(t => t.done);
-
-        if (sortMode) {
-            result.sort((a, b) => Number(a.done) - Number(b.done));
-        } else {
-            result.sort((a, b) => b.id - a.id);
-        }
-        return result;
-    }
-
-    add({ text, image, dueDate }) {
-        const todo = createTodo(text, image, dueDate);
-        this.tasks = [todo, ...this.tasks];
+    add(task) {
+        this.tasks.unshift(task); // Dodaj na początek
         this._save();
-        return todo;
     }
 
     remove(id) {
@@ -63,24 +33,21 @@ export class TodoStore {
     }
 
     toggle(id) {
-        this.tasks = this.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+        this.tasks = this.tasks.map(t => 
+            t.id === id ? { ...t, isCompleted: !t.isCompleted } : t
+        );
         this._save();
     }
 
     updateText(id, newText) {
-        this.tasks = this.tasks.map(t => t.id === id ? { ...t, text: newText } : t);
+        this.tasks = this.tasks.map(t => 
+            t.id === id ? { ...t, text: newText } : t
+        );
         this._save();
     }
 
-    removeCompleted() {
-        this.tasks = this.tasks.filter(t => !t.done);
+    clearCompleted() {
+        this.tasks = this.tasks.filter(t => !t.isCompleted);
         this._save();
-    }
-    
-    getStats() {
-        return {
-            total: this.tasks.length,
-            completed: this.tasks.filter(t => t.done).length
-        };
     }
 }

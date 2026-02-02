@@ -1,37 +1,17 @@
 export class UIStore {
     constructor() {
-        this.state = {
-            filter: 'all',      // 'all', 'active', 'completed'
-            sort: false,        // false = default, true = active first
-            taskToDeleteId: null
-        };
+        this.filter = 'all'; // all, active, completed
+        this.sort = false;   // true = A-Z, false = domyślne
+        this.taskToDelete = null;
     }
 
-    setFilter(mode) {
-        this.state.filter = mode;
-    }
+    getFilter() { return this.filter; }
+    setFilter(f) { this.filter = f; }
 
-    getFilter() {
-        return this.state.filter;
-    }
+    getSort() { return this.sort; }
+    setSort(s) { this.sort = s; }
 
-    setSort(isActive) {
-        this.state.sort = isActive;
-    }
-
-    getSort() {
-        return this.state.sort;
-    }
-
-    setTaskToDelete(id) {
-        this.state.taskToDeleteId = id;
-    }
-
-    getTaskToDelete() {
-        return this.state.taskToDeleteId;
-    }
-    
-    clearTaskToDelete() {
-        this.state.taskToDeleteId = null;
-    }
+    getTaskToDelete() { return this.taskToDelete; }
+    setTaskToDelete(id) { this.taskToDelete = id; }
+    clearTaskToDelete() { this.taskToDelete = null; }
 }

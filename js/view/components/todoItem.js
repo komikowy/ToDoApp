@@ -1,141 +1,101 @@
 export class TodoItem {
-    // Dodajemy parametr imageLoader (to jest nasz ImageStore)
-    static create(task, imageLoader = null) {
+    static create(task, imageLoader) {
         const li = document.createElement('li');
-        // Używamy isCompleted zgodnie z TodoRules, fallback na done jeśli stare dane
-        const isDone = task.isCompleted !== undefined ? task.isCompleted : task.done;
         
-        li.className = `todo-item ${isDone ? 'completed' : ''}`;
+        // SPRZĄTANIE: Używamy wyłącznie isCompleted, bo system jest już spójny
+        li.className = `todo-item ${task.isCompleted ? 'completed' : ''}`;
         li.dataset.id = task.id;
 
-        // Budowanie struktury DOM
-        const checkbox = this._createCheckbox(isDone);
-        const textContainer = this._createTextContainer(task);
-        const dueDateContainer = this._createDueDate(task);
-        
-        // Przekazujemy imageLoader do panelu prawego
+        const checkbox = this._createDiv('custom-checkbox');
+        const textContainer = this._createText(task);
+        const dateContainer = this._createDate(task);
         const rightPanel = this._createRightPanel(task, imageLoader);
 
-        li.append(checkbox, textContainer, dueDateContainer, rightPanel);
+        li.append(checkbox, textContainer, dateContainer, rightPanel);
         return li;
     }
 
-    static _createCheckbox(isDone) {
+    static _createDiv(className) {
         const div = document.createElement('div');
-        div.className = 'custom-checkbox';
-        if (isDone) {
-            div.textContent = '✔'; // Opcjonalnie: wizualne zaznaczenie
-        }
+        div.className = className;
         return div;
     }
 
-    static _createTextContainer(task) {
-        const container = document.createElement('div');
-        container.className = 'text-container';
-
+    static _createText(task) {
+        const container = this._createDiv('text-container');
+        
         const text = document.createElement('span');
         text.className = 'text';
         text.textContent = task.text;
 
-        const createdInfo = document.createElement('span');
-        createdInfo.className = 'created-at';
-        
-        // Obsługa daty utworzenia
-        let dateStr = '';
+        const date = document.createElement('span');
+        date.className = 'created-at';
         try {
-            const dateObj = new Date(task.createdAt || Date.now());
-            dateStr = dateObj.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
-        } catch (e) {
-            dateStr = '???';
-        }
-        
-        createdInfo.textContent = `Dodano: ${dateStr}`;
+            // Bezpieczne parsowanie daty ISO
+            date.textContent = 'Dodano: ' + new Date(task.createdAt).toLocaleDateString('pl-PL', {day:'numeric', month:'short'});
+        } catch(e) { date.textContent = ''; }
 
-        container.append(text, createdInfo);
+        container.append(text, date);
         return container;
     }
 
-    static _createDueDate(task) {
-        const container = document.createElement('div');
-        container.className = 'due-date-container';
-        
-        // Obsługa pola dueDate (zgodnie z nowym kontrolerem)
+    static _createDate(task) {
+        const container = this._createDiv('due-date-container');
         if (task.dueDate) {
             const span = document.createElement('span');
             span.className = 'date-info';
             try {
-                const date = new Date(task.dueDate).toLocaleString('pl-PL', { 
-                    day: 'numeric', 
-                    month: 'numeric', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-                span.textContent = `📅 ${date}`;
-            } catch (e) {
-                span.textContent = `📅 Błąd daty`;
-            }
-            container.appendChild(span);
+                const d = new Date(task.dueDate);
+                span.textContent = '⏰ ' + d.toLocaleString('pl-PL', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+                container.appendChild(span);
+            } catch(e) {}
         }
         return container;
     }
 
     static _createRightPanel(task, imageLoader) {
-        const panel = document.createElement('div');
-        panel.className = 'right-panel';
+        const panel = this._createDiv('right-panel');
 
-        // LOGIKA OBRAZKA (IndexedDB)
-        // Sprawdzamy czy task ma ID pliku (task.file)
+        // SPRZĄTANIE: Sprawdzanie task.file zgodnie z modelem IndexedDB
         if (task.file) {
+            const imgContainer = this._createDiv('img-container');
             const img = document.createElement('img');
             img.className = 'img-preview';
-            img.alt = "Ładowanie...";
-            // Placeholder na czas ładowania (opcjonalnie)
-            img.style.opacity = "0.5"; 
+            img.alt = 'Podgląd zadania';
+            
+            // Lekki placeholder inline (Base64 tutaj jest akceptowalne, bo to stały element UI)
+            img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg1MCIgaGVpZ2h0PSI1MCIgZmlsbD0iI2VlZSIvPjwvc3ZnPg==';
+            
+            imgContainer.appendChild(img);
+            panel.appendChild(imgContainer);
 
-            // Kliknięcie otwiera podgląd
-            img.onclick = (e) => {
-                e.stopPropagation();
-                // Otwieramy tylko jeśli obrazek się załadował (ma src)
-                if (img.src && img.src.startsWith('blob:')) {
-                    window.open(img.src, '_blank');
-                }
-            };
-
-            panel.appendChild(img);
-
-            // Asynchroniczne pobranie z IndexedDB
             if (imageLoader) {
-                imageLoader.getImage(task.file).then(blobUrl => {
-                    if (blobUrl) {
-                        img.src = blobUrl;
-                        img.style.opacity = "1"; // Pełna widoczność po załadowaniu
-                    } else {
-                        // Jeśli nie znaleziono obrazka w bazie, usuwamy element img
-                        img.remove();
+                imageLoader.getImage(task.file).then(url => {
+                    if (url) {
+                        img.src = url;
+                        // Otwieranie zdjęcia w nowej karcie
+                        img.onclick = (e) => { 
+                            e.stopPropagation(); 
+                            window.open(url, '_blank'); 
+                        };
                     }
-                }).catch(err => {
-                    console.error("Błąd ładowania miniatury:", err);
-                    img.remove();
                 });
             }
         }
 
-        // Przyciski akcji
-        const actions = document.createElement('div');
-        actions.className = 'actions';
-        
+        const actions = this._createDiv('actions');
         if (task.dueDate) actions.appendChild(this._createBtn('calendar-btn', '📆'));
         actions.appendChild(this._createBtn('edit-btn', '✏️'));
         actions.appendChild(this._createBtn('delete-btn', '🗑'));
-        
+
         panel.appendChild(actions);
         return panel;
     }
 
-    static _createBtn(cls, icon) {
+    static _createBtn(cls, txt) {
         const btn = document.createElement('button');
         btn.className = `action-btn ${cls}`;
-        btn.textContent = icon;
+        btn.textContent = txt;
         return btn;
     }
 }

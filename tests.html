@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Enterprise ToDo - Test Runner</title>
+    <style>
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #f4f4f9; }
+        .test-card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🧪 Runner Testów</h1>
+        <p>Wyniki w konsoli (F12)</p>
+        <button id="start-tests-btn">Uruchom wszystkie testy</button>
+    </div>
+
+    <script type="module" src="./js/tests/testRunner.js"></script>
+</body>
+</html>
