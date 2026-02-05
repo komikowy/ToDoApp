@@ -1,9 +1,13 @@
 const STORAGE_KEY = 'todo_app_pro_v4'; // Nowa wersja klucza
 
+// Zarządzanie zadaniami ToDo z lokalnym przechowywaniem
+
 export class TodoStore {
     constructor() {
         this.tasks = this._load();
     }
+
+// Ładowanie danych z localStorage
 
     _load() {
         try {

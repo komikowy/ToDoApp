@@ -33,7 +33,6 @@ export class TodoView {
      */
     render(tasks) {
         // 1. PAMIĘĆ: Zwolnienie starych adresów Blob URL przed usunięciem widoku
-        // Zapobiega wyciekom pamięci RAM przy częstym odświeżaniu listy ze zdjęciami
         const oldImages = this.list.querySelectorAll('img.img-preview');
         oldImages.forEach(img => {
             if (img.src.startsWith('blob:')) {
@@ -51,14 +50,12 @@ export class TodoView {
         }
         
         // 3. WYDAJNOŚĆ: Budowanie DOM w pamięci (DocumentFragment)
-        // Minimalizuje reflow (przeliczanie układu strony)
         const fragment = document.createDocumentFragment();
         tasks.forEach(task => {
             fragment.appendChild(TodoItem.create(task, this.imageLoader));
         });
 
         // 4. WYDAJNOŚĆ: Jedna operacja na żywym DOM zamiast wielu
-        // replaceChildren jest najszybszą natywną metodą aktualizacji
         this.list.replaceChildren(fragment);
     }
 
@@ -85,7 +82,7 @@ export class TodoView {
             if (e.target.closest('.delete-btn')) handler('delete', id);
             else if (e.target.closest('.edit-btn')) handler('edit', id);
             else if (e.target.closest('.calendar-btn')) handler('calendar', id);
-            else if (e.target.closest('.img-preview')) return; // Kliknięcie w obrazek obsługuje TodoItem
+            else if (e.target.closest('.img-preview')) return; 
             else handler('toggle', id);
         });
     }
@@ -96,8 +93,22 @@ export class TodoView {
         this.toastManager.show(msg, type); 
     }
 
-    showDialog() { 
-        this.modalManager.open(); 
+    /**
+     * ZMIANA: Obsługa dynamicznego modala (usuwanie/czyszczenie/edycja).
+     * @param {string} title - Tytuł modala
+     * @param {string} desc - Opis w modalu
+     * @param {string|null} inputValue - Jeśli podany, włącza tryb edycji
+     * @param {string} confirmText - Tekst na przycisku (np. "Usuń", "Zapisz")
+     */
+    showDialog(title, desc, inputValue = null, confirmText = "Usuń") { 
+        this.modalManager.open(title, desc, inputValue, confirmText); 
+    }
+
+    /**
+     * NOWOŚĆ: Metoda dla kontrolera do pobrania wpisanego tekstu w modalu.
+     */
+    getDialogInputValue() {
+        return this.modalManager.getInputValue();
     }
 
     closeDialog() { 

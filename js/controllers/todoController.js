@@ -17,7 +17,9 @@ export class TodoController {
         this.view.bindSortChange(this.handleSort);
         this.view.bindClearCompleted(this.handleClear);
         this.view.bindNotificationToggle(this.handleNotify);
-        this.view.bindDialogConfirm(this.handleConfirmDelete);
+        
+        // ZMIANA NAZWY: Metoda obsługuje teraz różne akcje (delete/clear/edit)
+        this.view.bindDialogConfirm(this.handleConfirmAction);
 
         this._refresh();
         this._updateNotify();
@@ -50,21 +52,15 @@ export class TodoController {
             this.view.updateNotifyIcon(this.notificationService.hasPermission());
     }
 
-    /**
-     * Obsługa dodawania zadania z ulepszoną odpornością na błędy.
-     * Reset formularza następuje TYLKO po pełnym sukcesie.
-     */
     handleAdd = async ({ text, date, file }) => {
         try {
             let imageId = null;
             if (file && file instanceof File) {
                 this.view.showToast("Zapisywanie zdjęcia...", "info");
                 try {
-                    // Próba zapisu do IndexedDB
                     imageId = await this.imageStore.saveImage(file);
                 } catch (e) {
                     console.error("Image Save Error:", e);
-                    // Rzucamy błąd dalej, aby zatrzymać proces dodawania zadania
                     throw new Error("Błąd zapisu zdjęcia. Zadanie nie zostało dodane.");
                 }
             }
@@ -76,28 +72,38 @@ export class TodoController {
             this.notificationService.schedule(newTask);
             
             this.view.showToast("Dodano!", "success");
-            this.view.resetForm(); // Sukces - czyścimy formularz
+            this.view.resetForm();
             this._refresh();
         } catch (e) {
-            // Błąd - dane zostają w polach formularza, użytkownik widzi komunikat
             this.view.showToast(e.message, "error");
         }
     };
 
+    /**
+     * Obsługa akcji listy: Usuwanie (modal), Edycja (modal z inputem), Toggle, Kalendarz
+     */
     handleListAction = (action, id) => {
+        // 1. USUWANIE
         if (action === 'delete') {
             this.uiStore.setTaskToDelete(id);
-            this.view.showDialog();
-        } else if (action === 'toggle') {
+            this.uiStore.setConfirmAction('delete');
+            // showDialog(tytuł, opis, inputVal, przyciskTxt)
+            this.view.showDialog("Usunąć zadanie?", "To zadanie zniknie na zawsze.", null, "Usuń");
+        } 
+        // 2. EDYCJA (ZMIANA: Zamiast prompt() otwieramy modal)
+        else if (action === 'edit') {
+            const t = this.todoStore.getAll().find(x => x.id === id);
+            if (t) {
+                this.uiStore.setTaskToEdit(id); // Zapisujemy ID edytowanego
+                this.uiStore.setConfirmAction('edit'); // Ustawiamy tryb
+                // Otwieramy modal z obecnym tekstem w inpucie
+                this.view.showDialog("Edytuj zadanie", "Wprowadź nową treść:", t.text, "Zapisz");
+            }
+        } 
+        // 3. POZOSTAŁE
+        else if (action === 'toggle') {
             this.todoStore.toggle(id);
             this._refresh();
-        } else if (action === 'edit') {
-            const t = this.todoStore.getAll().find(x => x.id === id);
-            const txt = prompt("Edytuj:", t.text);
-            if (txt && txt.trim()) {
-                this.todoStore.updateText(id, txt.trim());
-                this._refresh();
-            }
         } else if (action === 'calendar') {
             const t = this.todoStore.getAll().find(x => x.id === id);
             if(t && t.dueDate) {
@@ -108,50 +114,74 @@ export class TodoController {
     };
 
     /**
-     * Potwierdzenie usuwania z obsługą błędów asynchronicznych.
+     * ZMIANA: Główny handler zatwierdzania modala (obsługuje Delete, Edit i Clear)
      */
-    handleConfirmDelete = async () => {
-        const id = this.uiStore.getTaskToDelete();
-        if (!id) return;
+    handleConfirmAction = async () => {
+        const action = this.uiStore.getConfirmAction();
 
-        try {
-            const t = this.todoStore.getAll().find(x => x.id === id);
-            // Jeśli zadanie miało zdjęcie, usuwamy je z IndexedDB
-            if (t && t.file) {
-                await this.imageStore.deleteImage(t.file);
+        // Przypadek A: Usuwanie jednego zadania
+        if (action === 'delete') {
+            const id = this.uiStore.getTaskToDelete();
+            if (id) {
+                try {
+                    const t = this.todoStore.getAll().find(x => x.id === id);
+                    if (t && t.file) await this.imageStore.deleteImage(t.file);
+                    
+                    this.todoStore.remove(id);
+                    this.view.showToast("Usunięto zadanie", "info");
+                } catch (e) {
+                    console.error(e);
+                    this.view.showToast("Błąd usuwania", "error");
+                }
             }
-            
-            this.todoStore.remove(id);
-            this.uiStore.clearTaskToDelete();
-            this.view.closeDialog();
-            this.view.showToast("Usunięto", "info");
-            this._refresh();
-        } catch (e) {
-            console.error("Delete Error:", e);
-            this.view.showToast("Nie udało się usunąć zadania z bazy.", "error");
-        }
-    };
+        } 
+        // NOWOŚĆ: Przypadek B: Zatwierdzenie edycji
+        else if (action === 'edit') {
+            const id = this.uiStore.getTaskToEdit();
+            const newText = this.view.getDialogInputValue(); // Pobieramy tekst z widoku
 
-    /**
-     * Masowe czyszczenie z asynchronicznym usuwaniem mediów.
-     */
-    handleClear = async () => {
-        if (confirm("Wyczyścić ukończone?")) {
+            if (id && newText) {
+                // Tu można dodać walidację (np. długość tekstu)
+                this.todoStore.updateText(id, newText);
+                this.view.showToast("Zapisano zmiany", "success");
+            }
+        }
+        // Przypadek C: Czyszczenie ukończonych
+        else if (action === 'clear') {
             try {
                 const done = this.todoStore.getAll().filter(t => t.isCompleted);
                 for (const t of done) {
-                    if (t.file) {
-                        await this.imageStore.deleteImage(t.file);
-                    }
+                    if (t.file) await this.imageStore.deleteImage(t.file);
                 }
                 
                 this.todoStore.clearCompleted();
-                this._refresh();
+                this.view.showToast("Wyczyszczono ukończone!", "success");
             } catch (e) {
                 console.error("Clear Error:", e);
-                this.view.showToast("Błąd podczas czyszczenia mediów.", "error");
+                this.view.showToast("Błąd czyszczenia mediów.", "error");
             }
         }
+
+        // Wspólne sprzątanie po akcji
+        this.uiStore.clearTaskToDelete();
+        this.uiStore.clearTaskToEdit(); // Czyścimy ID edycji
+        this.uiStore.setConfirmAction(null);
+        this.view.closeDialog();
+        this._refresh();
+    };
+
+    /**
+     * Otwiera modal potwierdzenia czyszczenia
+     */
+    handleClear = () => {
+        const hasCompleted = this.todoStore.getAll().some(t => t.isCompleted);
+        if (!hasCompleted) {
+            this.view.showToast("Brak ukończonych zadań.", "info");
+            return;
+        }
+
+        this.uiStore.setConfirmAction('clear');
+        this.view.showDialog("Wyczyścić ukończone?", "Wszystkie zrobione zadania zostaną trwale usunięte.", null, "Wyczyść");
     };
 
     handleFilter = (f) => { this.uiStore.setFilter(f); this._refresh(); };

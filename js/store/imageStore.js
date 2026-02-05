@@ -7,6 +7,8 @@ export class ImageStore {
         this.dbPromise = this._initDB();
     }
 
+    // Inicjalizacja IndexedDB
+
     _initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -23,6 +25,8 @@ export class ImageStore {
         });
     }
 
+    // Zapis obrazu (Blob) i zwrócenie jego ID
+
     async saveImage(file) {
         const db = await this.dbPromise;
         const id = crypto.randomUUID(); // Generujemy unikalne ID dla pliku
@@ -38,6 +42,8 @@ export class ImageStore {
             request.onerror = () => reject(request.error);
         });
     }
+
+// Pobranie obrazu jako URL na podstawie ID
 
     async getImage(id) {
         if (!id) return null;
@@ -56,6 +62,8 @@ export class ImageStore {
             request.onerror = () => reject(request.error);
         });
     }
+
+    // Usunięcie obrazu na podstawie ID
 
     async deleteImage(id) {
         if (!id) return;

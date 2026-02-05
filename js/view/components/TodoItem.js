@@ -15,11 +15,15 @@ export class TodoItem {
         return li;
     }
 
+    // Tworzenie ogólnego diva z klasą
+
     static _createDiv(className) {
         const div = document.createElement('div');
         div.className = className;
         return div;
     }
+
+    // Tworzenie elementu tekstu zadania wraz z datą dodania
 
     static _createText(task) {
         const container = this._createDiv('text-container');
@@ -38,6 +42,8 @@ export class TodoItem {
         container.append(text, date);
         return container;
     }
+
+    // Tworzenie elementu daty wykonania zadania
 
     static _createDate(task) {
         const container = this._createDiv('due-date-container');
@@ -82,6 +88,8 @@ export class TodoItem {
                 });
             }
         }
+
+        // Akcje: kalendarz, edycja, usuwanie
 
         const actions = this._createDiv('actions');
         if (task.dueDate) actions.appendChild(this._createBtn('calendar-btn', '📆'));

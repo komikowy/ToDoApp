@@ -3,6 +3,8 @@ export class ToastManager {
         this.container = document.getElementById(containerId);
     }
 
+    // Wyświetlenie toastu z wiadomością
+
     show(message, type = 'info') {
         if (!this.container) return;
         
